@@ -17,11 +17,13 @@ executable ros2nix
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.8 && <4.9,
+                       process,
                        containers,
                        hxt >= 9.3 && < 9.4,
                        text,
                        lens >= 4.13 && < 4.14,
                        yaml-light >= 0.1 && < 0.2,
-                       yaml-light-lens >= 0.3 && < 0.4
+                       yaml-light-lens >= 0.3 && < 0.4,
+                       hnix >= 0.2 && < 0.3
   hs-source-dirs:      src
   default-language:    Haskell2010
