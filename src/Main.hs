@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleContexts, OverloadedStrings, TemplateHaskell #-}
-import Codec.Archive.Tar (extract)
 import Control.Applicative ((<|>), liftA2)
+import qualified Codec.Archive.Tar as Tar
+import Codec.Compression.GZip (decompress)
 import Control.Lens
 import Control.Monad (filterM)
 import Data.Bool (bool)
+import qualified Data.ByteString.Lazy as BL
 import Data.Maybe (catMaybes)
 import qualified Data.Set as S
 import Data.Text (Text)
@@ -19,6 +21,7 @@ import System.IO.Temp (withSystemTempDirectory)
 import System.Process (readCreateProcessWithExitCode, proc)
 import Text.XML.HXT.Core
 import Data.Maybe (fromMaybe)
+import Data.List (isSuffixOf)
 
 testFile :: FilePath
 testFile = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/src/actionlib/package.xml"
@@ -68,25 +71,29 @@ prefetch pkg = do (_,sha,path) <- readCreateProcessWithExitCode cp ""
                     <$> extractDeps (init (init (drop 9 path)))
   where url = T.unpack (view uri pkg)
         cp = proc "nix-prefetch-url" [url]
-        extractDeps path =
-          fromMaybe (error $ "Couldn't find package.xml in "++path)
-          <$> extractDependencies path
+        oops path NoPackageXML = error $ "Couldn't find package.xml in "++path
+        oops path NotGzip = error $ "Couldn't decompress "++path++" (not gzip)"
+        extractDeps path = either (oops path) id <$> extractDependencies path
 
 firstM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
 firstM f = go
   where go [] = return Nothing
         go (x:xs) = f x >>= bool (go xs) (return (Just x))
 
-extractDependencies :: String -> IO (Maybe [Text])
+data PackageError = NoPackageXML | NotGzip deriving (Eq,Show)
+
+extractDependencies :: String -> IO (Either PackageError [Text])
+extractDependencies nixPath
+  | not (".gz" `isSuffixOf` nixPath) = return (Left NotGzip)
 extractDependencies nixPath =
   withSystemTempDirectory "ros2nix" $ \dir ->
-    do extract dir nixPath
+    do BL.readFile nixPath >>= Tar.unpack dir . Tar.read . decompress 
        dirs <- filter (any (/= '.')) <$> getDirectoryContents dir
-               >>= filterM doesDirectoryExist
+               >>= filterM (doesDirectoryExist . (dir </>))
        pkgDir <- firstM (\d -> doesFileExist (dir </> d </> "package.xml")) dirs
        case pkgDir of
-         Nothing -> return Nothing
-         Just d -> Just <$> getDependencies (dir </> d </> "package.xml")
+         Nothing -> return (Left NoPackageXML)
+         Just d -> Right <$> getDependencies (dir </> d </> "package.xml")
 
 -- | Parse a @.rosinstall@ file extracting package information
 getPackages :: FilePath -> IO [RosPackage]
