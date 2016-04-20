@@ -1,15 +1,11 @@
 {-# LANGUAGE FlexibleContexts, OverloadedStrings, TemplateHaskell #-}
-{-# OPTIONS_GHC -fdefer-type-errors #-}
-import qualified Codec.Archive.Tar as Tar
-import Codec.Compression.GZip (decompress)
-import Control.Applicative ((<|>), liftA2)
+{-# OPTIONS_GHC -fdefer-type-errors -Wall #-}
 import Control.Lens
-import Control.Monad ((>=>), filterM)
+import Control.Logging (debug, errorL, setLogLevel, withStdoutLogging, LogLevel(..))
+import Control.Monad (filterM)
 import Data.Bool (bool)
-import qualified Data.ByteString.Lazy as BL
-import Data.Foldable (fold)
 import Data.List (isSuffixOf)
-import Data.Maybe (catMaybes, fromMaybe)
+import Data.Maybe (catMaybes)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -20,10 +16,12 @@ import Nix.Pretty (prettyNix)
 import Nix.Types
 import System.Directory (doesFileExist, getDirectoryContents, doesDirectoryExist)
 import System.Environment (getArgs)
-import System.FilePath ((</>), takeBaseName)
+import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process (readCreateProcessWithExitCode, proc)
 import Text.XML.HXT.Core
+import Data.Monoid ((<>))
+import System.Process (callProcess)
 
 testFile :: FilePath
 testFile = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/src/actionlib/package.xml"
@@ -51,6 +49,7 @@ mkStr' :: Text -> NExpr
 mkStr' = mkStr DoubleQuoted
 
 -- | Helper to make a Nix let-binding
+nixLet :: Text -> NExpr -> Binding NExpr
 nixLet k v = NamedVar (mkSelector k) v
 
 -- | Generate a @fetchurl@ Nix expression.
@@ -68,21 +67,22 @@ nixify pkg = mkFunction args body
                , nixLet "version" (mkStr' (view version pkg))
                , nixLet "src" (fetchSrc pkg)
                , nixLet "buildInputs" (mkList deps') ]
-        deps' = map mkSym ("cmake" : "pkgconfig" : deps pkg)
+        deps' = map mkSym ("cmake" : "pkgconfig" : "ros-build-tools" : deps pkg)
 
 -- | Prefetch the source for a ROS package into the Nix store
 -- recording its hash and list of dependencies.
 prefetch :: RosPackage -> IO Package
 prefetch pkg = do (_,sha,path) <- readCreateProcessWithExitCode cp ""
-                  putStrLn $ "Prefetched "++ T.unpack (view localName pkg)
+                  debug $ "Prefetched " <> view localName pkg
                   -- path is printed on stderr as: path is '/nix/store/....'
                   Package pkg (T.pack (init sha))
                     <$> extractDeps (init (init (drop 9 path)))
   where url = T.unpack (view uri pkg)
         cp = proc "nix-prefetch-url" [url]
-        oops path NoPackageXML = error $ "Couldn't find package.xml in "++path
-        oops path NotGzip = error $ "Couldn't decompress "++path++" (not gzip)"
-        extractDeps path = either (oops path) id <$> extractDependencies path
+        oops path NoPackageXML = errorL $ "Couldn't find package.xml in "<>path
+        oops path NotGzip = errorL $ "Couldn't decompress "<>path<>" (not gzip)"
+        extractDeps path =  either (oops $ T.pack path) id
+                        <$> extractDependencies path
 
 -- | Monadic combinator that returns the first element of a list for
 -- which the provided monadic predicate returns 'True'.
@@ -100,22 +100,27 @@ extractDependencies :: String -> IO (Either PackageError [Text])
 extractDependencies nixPath
   | not (".gz" `isSuffixOf` nixPath) = return (Left NotGzip)
 extractDependencies nixPath =
-  withSystemTempDirectory "ros2nix" $ \dir ->
-    do BL.readFile nixPath >>= Tar.unpack dir . Tar.read . decompress 
-       dirs <- filter (any (/= '.')) <$> getDirectoryContents dir
-               >>= filterM (doesDirectoryExist . (dir </>))
-       pkgDir <- firstM (\d -> doesFileExist (dir </> d </> "package.xml")) dirs
+  withSystemTempDirectory "ros2nix" $ \tmpDir ->
+    do callProcess "tar" ["xf", nixPath, "-C", tmpDir]
+       dirs <- filter (any (/= '.')) <$> getDirectoryContents tmpDir
+               >>= filterM (doesDirectoryExist . (tmpDir </>))
+       pkgDir <- firstM (doesFileExist . (</> "package.xml"))
+                        (map (tmpDir </>) dirs)
        case pkgDir of
          Nothing -> return (Left NoPackageXML)
-         Just d -> Right <$> getDependencies (dir </> d </> "package.xml")
+         Just d -> Right <$> getDependencies (tmpDir </> d </> "package.xml")
+
+-- | Remove ROS stack name components from a ROS package path.
+nixName :: Text -> Text
+nixName = T.takeWhileEnd (/= '/')
 
 -- | Parse a @.rosinstall@ file extracting package information
 getPackages :: FilePath -> IO [RosPackage]
-getPackages f = aux <$> parseYamlFile f -- >>= mapM prefetch
+getPackages f = aux <$> parseYamlFile f
   where aux y = catMaybes $ y ^.. each . key "tar" . to pkg
         pkg :: YamlLight -> Maybe RosPackage
         pkg y = RosPackage 
-              <$> y ^? key "local-name" . _Yaml . to decodeUtf8
+              <$> y ^? key "local-name" . _Yaml . to (nixName . decodeUtf8)
               <*> y ^? key "uri" . _Yaml . to decodeUtf8
               <*> y ^? key "version" . _Yaml . to decodeUtf8
 
@@ -135,13 +140,18 @@ getDependencies = fmap (map T.pack . S.toList . S.fromList)
                 . runX . parseDependencies
 
 -- | Create a Nix attribute set with definitions for each package.
-mkPackageSet :: [Package] -> NExpr
-mkPackageSet pkgs = mkLet [ callPkg
+letPackageSet :: [Package] -> NExpr -> NExpr
+letPackageSet pkgs = mkLet [ callPkg
                           , NamedVar (mkSelector "rosPackageSet") pkgSet ]
-                          pkgSetName
   where callPkg = NamedVar (mkSelector "callPackage") $
                   mkApp (mkSym "stdenv.lib.callPackageWith")
                         pkgSetName
+        catkinBuild = mkStr Indented $ unlines [
+                        "source $stdenv/setup"
+                      , "mkdir -p $out"
+                      , "HOME=$out"
+                      , "export TERM=xterm-256color"
+                      , "export PYTHONHOME=${python}" ]
         pkgSetName = mkSym "rosPackageSet"
         pkgSet = mkNonRecSet (map defPkg pkgs)
         defPkg pkg = NamedVar (mkSelector (pkg ^. localName)) $
@@ -155,29 +165,24 @@ externalDeps pkgs = S.toList $ S.difference allDeps internalPackages
         allDeps = S.fromList $ foldMap deps pkgs
 
 -- | Generate a Nix derivation that depends on all given packages.
-mkMetaPackage :: Text -> [Package] -> NExpr
-mkMetaPackage name pkgs = mkFunction args body
+mkMetaPackage :: [Package] -> NExpr
+mkMetaPackage pkgs = mkFunction args body
   where args = mkFormalSet $ zip ("stdenv" : externalDeps pkgs) (repeat Nothing)
-        body = mkApp (mkSym "stdenv.mkDerivation") $ mkNonRecSet
-               [ nixLet "name" (mkStr' name)
-               , nixLet "buildInputs" (mkList deps') ]
-        deps' = map mkSym ["cmake", "pkgconfig"] ++ [mkPackageSet pkgs]
-
-guessPackageSetName :: Text -> Text
-guessPackageSetName name
-  | "ros-" `T.isPrefixOf` name = guessPackageSetName (T.drop 4 name)
-  | "-src" `T.isSuffixOf` name = guessPackageSetName (T.dropEnd 4 name)
-  | otherwise = name
+        body = letPackageSet pkgs . mkApp (mkSym "stdenv.mkDerivation") $
+               mkNonRecSet
+               [ nixLet "name" (mkStr' "rosPackages")
+               , nixLet "buildInputs" (mkList deps')
+               , nixLet "src" (mkList [ mkSym "nixpkgs" ]) ]
+        deps' = map mkSym ["cmake", "pkgconfig", "rosPackageSet"]
 
 main :: IO ()
-main = do args <- getArgs
+main = withStdoutLogging $
+       do args <- getArgs
           case args of
             [f] -> do fexists <- doesFileExist f
-                      let setName = guessPackageSetName . T.pack $ takeBaseName f
+                      setLogLevel LevelError
                       if fexists
                       then do pkgs <- getPackages f >>= mapM prefetch
-                              let pkgSet = mkPackageSet pkgs
-                                  meta = mkMetaPackage setName pkgs
-                              print (prettyNix meta)
+                              print (prettyNix $ mkMetaPackage pkgs)
                       else putStrLn $ "Couldn't find .rosinstall file: " ++ f
             _ -> putStrLn $ "Usage: ros2nix distro.rosinstall"
