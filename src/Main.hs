@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings, QuasiQuotes, TemplateHaskell #-}
 {-# OPTIONS_GHC -fdefer-type-errors -Wall #-}
 import Control.Lens
 import Control.Logging (debug, errorL, setLogLevel, withStdoutLogging, LogLevel(..))
@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import Data.Text.Encoding
 import Data.Yaml.YamlLight
 import Data.Yaml.YamlLight.Lens
+import HashCache
 import Nix.Pretty (prettyNix)
 import Nix.Types
 import System.Directory (doesFileExist, getDirectoryContents, doesDirectoryExist)
@@ -22,6 +23,7 @@ import System.Process (readCreateProcessWithExitCode, proc)
 import Text.XML.HXT.Core
 import Data.Monoid ((<>))
 import System.Process (callProcess)
+import Data.Maybe (maybeToList)
 
 testFile :: FilePath
 testFile = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/src/actionlib/package.xml"
@@ -71,14 +73,15 @@ nixify pkg = mkFunction args body
 
 -- | Prefetch the source for a ROS package into the Nix store
 -- recording its hash and list of dependencies.
-prefetch :: RosPackage -> IO Package
-prefetch pkg = do (_,sha,path) <- readCreateProcessWithExitCode cp ""
-                  debug $ "Prefetched " <> view localName pkg
-                  -- path is printed on stderr as: path is '/nix/store/....'
-                  Package pkg (T.pack (init sha))
-                    <$> extractDeps (init (init (drop 9 path)))
+prefetch :: Maybe HashCache -> RosPackage -> IO Package
+prefetch hc pkg = do (_,sha,path) <- readCreateProcessWithExitCode cp ""
+                     debug $ "Prefetched " <> view localName pkg
+                     -- path is printed on stderr as: path is '/nix/store/....'
+                     Package pkg (T.pack (init sha))
+                       <$> extractDeps (init (init (drop 9 path)))
   where url = T.unpack (view uri pkg)
-        cp = proc "nix-prefetch-url" [url]
+        cp = proc "nix-prefetch-url" $
+             url : maybeToList (hc >>= fmap T.unpack . cacheLookup (view uri pkg))
         oops path NoPackageXML = errorL $ "Couldn't find package.xml in "<>path
         oops path NotGzip = errorL $ "Couldn't decompress "<>path<>" (not gzip)"
         extractDeps path =  either (oops $ T.pack path) id
@@ -141,17 +144,22 @@ getDependencies = fmap (map T.pack . S.toList . S.fromList)
 
 -- | Create a Nix attribute set with definitions for each package.
 letPackageSet :: [Package] -> NExpr -> NExpr
-letPackageSet pkgs = mkLet [ callPkg
-                          , NamedVar (mkSelector "rosPackageSet") pkgSet ]
+letPackageSet pkgs =
+  mkLet [ callPkg
+        , NamedVar (mkSelector "SHLIB") $
+          mkIf (mkSym "stdenv.isDarwin") (mkStr' "dylib") (mkStr' "so")
+        , NamedVar (mkSelector "rosPackageSet") pkgSet ]
   where callPkg = NamedVar (mkSelector "callPackage") $
                   mkApp (mkSym "stdenv.lib.callPackageWith")
                         pkgSetName
-        catkinBuild = mkStr Indented $ unlines [
+        catkinBuild = mkStr Indented $ T.unlines [
                         "source $stdenv/setup"
                       , "mkdir -p $out"
                       , "HOME=$out"
                       , "export TERM=xterm-256color"
-                      , "export PYTHONHOME=${python}" ]
+                      , "export PYTHONHOME=${python}"
+                      , "catkin config --install --install-space $out"
+                      , "catkin build -DCMAKE_BUILD_TYPE=Release -DPYTHON_LIBRARY=${python}/lib/libpython2.7.${SHLIB} -DPYTHON_INCLUDE_DIR=${python}/include/python2.7 -DPYTHON_EXECUTABLE=${python.passthru.interpreter} -DEIGEN_ROOT_DIR=${eigen} -DEIGEN3_INCLUDE_DIR=${eigen}/include/eigen3" ]
         pkgSetName = mkSym "rosPackageSet"
         pkgSet = mkNonRecSet (map defPkg pkgs)
         defPkg pkg = NamedVar (mkSelector (pkg ^. localName)) $
@@ -178,11 +186,12 @@ mkMetaPackage pkgs = mkFunction args body
 main :: IO ()
 main = withStdoutLogging $
        do args <- getArgs
+          cache <- loadCache "perception_hash_cache.txt"
           case args of
             [f] -> do fexists <- doesFileExist f
                       setLogLevel LevelError
                       if fexists
-                      then do pkgs <- getPackages f >>= mapM prefetch
+                      then do pkgs <- getPackages f >>= mapM (prefetch cache)
                               print (prettyNix $ mkMetaPackage pkgs)
                       else putStrLn $ "Couldn't find .rosinstall file: " ++ f
             _ -> putStrLn $ "Usage: ros2nix distro.rosinstall"
