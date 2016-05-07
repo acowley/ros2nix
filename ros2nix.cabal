@@ -24,6 +24,7 @@ executable ros2nix
                        hxt >= 9.3 && < 9.4,
                        lens >= 4.13 && < 4.14,
                        logging >= 3.0 && < 3.1,
+                       optparse-applicative >= 0.12 && < 0.13,
                        process,
                        temporary,
                        text,
@@ -31,3 +32,4 @@ executable ros2nix
                        yaml-light-lens >= 0.3 && < 0.4
   hs-source-dirs:      src
   default-language:    Haskell2010
+  ghc-options: -Wall

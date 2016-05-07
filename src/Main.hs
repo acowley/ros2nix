@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts, OverloadedStrings, QuasiQuotes, TemplateHaskell #-}
 {-# OPTIONS_GHC -fdefer-type-errors -Wall #-}
-import Control.Lens
+import Control.Lens hiding (argument)
 import Control.Logging (debug, errorL, setLogLevel, withStdoutLogging, LogLevel(..))
 import Control.Monad (filterM)
 import Data.Bool (bool)
@@ -15,13 +15,14 @@ import Data.Yaml.YamlLight.Lens
 import HashCache
 import Nix.Pretty (prettyNix)
 import Nix.Types
+import Options.Applicative
 import System.Directory (doesFileExist, getDirectoryContents, doesDirectoryExist)
-import System.Environment (getArgs)
+-- import System.Environment (getArgs)
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
 import System.Process (readCreateProcessWithExitCode, proc)
 import Text.XML.HXT.Core
-import Data.Monoid ((<>))
+-- import Data.Monoid ((<>))
 import System.Process (callProcess)
 import Data.Maybe (maybeToList)
 
@@ -130,12 +131,14 @@ getPackages f = aux <$> parseYamlFile f
 -- | @package.xml@ parse helper.
 parseDependencies :: String -> IOSLA (XIOState s) a String
 parseDependencies f = readDocument [] f
-                    >>> getChildren
-                    >>> hasName "package"
-                    >>> getChildren
-                    >>> hasName "build_depend" <+> hasName "run_depend"
-                    >>> getChildren
-                    >>> getText
+                      >>> getChildren
+                      >>> hasName "package"
+                      >>> getChildren
+                      >>> hasName "buildtool_depend"
+                          <+> hasName "build_depend"
+                          <+> hasName "run_depend"
+                      >>> getChildren
+                      >>> getText
 
 -- | Helper to parse a @package.xml@ file.
 getDependencies :: FilePath -> IO [Text]
@@ -183,15 +186,41 @@ mkMetaPackage pkgs = mkFunction args body
                , nixLet "src" (mkList [ mkSym "nixpkgs" ]) ]
         deps' = map mkSym ["cmake", "pkgconfig", "rosPackageSet"]
 
+data Opts = Opts { _rosinstall :: FilePath
+                 , _outFile :: Maybe FilePath }
+
+optParser :: Parser Opts
+optParser = Opts
+            <$> strArgument (metavar "ROSINSTALL"
+                             <> help ".rosinstall file defining a ROS distro")
+            <*> (optional $ strOption $
+                 long "output" <> short 'o' <> metavar "OUTFILE"
+                 <> help "Write generated Nix expression to OUTFILE")
+
 main :: IO ()
 main = withStdoutLogging $
-       do args <- getArgs
+       do -- args <- getArgs
+          Opts f out <- execParser opts
           cache <- loadCache "perception_hash_cache.txt"
-          case args of
-            [f] -> do fexists <- doesFileExist f
-                      setLogLevel LevelError
-                      if fexists
-                      then do pkgs <- getPackages f >>= mapM (prefetch cache)
-                              print (prettyNix $ mkMetaPackage pkgs)
-                      else putStrLn $ "Couldn't find .rosinstall file: " ++ f
-            _ -> putStrLn $ "Usage: ros2nix distro.rosinstall"
+          maybe (putStrLn "No hash cache available")
+                (const $ putStrLn "Using hash cache")
+                cache
+          fexists <- doesFileExist f
+          setLogLevel LevelError
+          if fexists
+          then do pkgs <- getPackages f >>= mapM (prefetch cache)
+                  let nix = show . prettyNix $ mkMetaPackage pkgs
+                  maybe print writeFile out nix
+          else putStrLn $ "Couldn't find .rosinstall file: " ++ f
+
+          -- case args of
+          --   [f] -> do fexists <- doesFileExist f
+          --             setLogLevel LevelError
+          --             if fexists
+          --             then do pkgs <- getPackages f >>= mapM (prefetch cache)
+          --                     print (prettyNix $ mkMetaPackage pkgs)
+          --             else putStrLn $ "Couldn't find .rosinstall file: " ++ f
+          --   _ -> putStrLn $ "Usage: ros2nix distro.rosinstall"
+  where opts = info (helper <*> optParser)
+                    (fullDesc 
+                     <> header "Generate a Nix expression for a ROS distro")

@@ -5,7 +5,8 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, stdenv, base, containers, hxt, text, hnix, directory, lens
-      , process, yaml-light, yaml-light-lens, temporary, filepath, logging }:
+      , process, yaml-light, yaml-light-lens, temporary, filepath, logging
+      , optparse-applicative }:
       mkDerivation {
         pname = "ros2nix";
         version = "0.1.0.0";
@@ -14,7 +15,8 @@ let
         isExecutable = true;
         executableHaskellDepends = [ base hxt containers text hnix process
                                      lens yaml-light yaml-light-lens
-                                     temporary directory filepath logging ];
+                                     temporary directory filepath logging
+                                     optparse-applicative ];
         description = "Build Nix definitions of a ROS distribution";
         license = stdenv.lib.licenses.bsd3;
       };
