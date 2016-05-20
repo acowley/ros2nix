@@ -25,6 +25,8 @@ import Text.XML.HXT.Core
 -- import Data.Monoid ((<>))
 import System.Process (callProcess)
 import Data.Maybe (maybeToList)
+import RosDep2Nix (rosPyDeps, rosDep2Nix)
+import Data.Maybe (mapMaybe)
 
 testFile :: FilePath
 testFile = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/src/actionlib/package.xml"
@@ -51,26 +53,26 @@ instance HasRosPackage Package where
 mkStr' :: Text -> NExpr
 mkStr' = mkStr DoubleQuoted
 
--- | Helper to make a Nix let-binding
-nixLet :: Text -> NExpr -> Binding NExpr
-nixLet k v = NamedVar (mkSelector k) v
+-- | Helper to make a Nix name-value binding
+nixKeyVal :: Text -> NExpr -> Binding NExpr
+nixKeyVal k v = NamedVar (mkSelector k) v
 
 -- | Generate a @fetchurl@ Nix expression.
 fetchSrc :: Package -> NExpr
 fetchSrc pkg = mkApp (mkSym "fetchurl") $ mkNonRecSet
-               [ nixLet "url" (mkStr' (view uri pkg))
-               , nixLet "sha256" (mkStr' (sha256 pkg)) ]
+               [ nixKeyVal "url" (mkStr' (view uri pkg))
+               , nixKeyVal "sha256" (mkStr' (sha256 pkg)) ]
 
 -- | Generate a Nix derivation for a 'Package'.
 nixify :: Package -> NExpr
 nixify pkg = mkFunction args body
   where args = mkFormalSet $ zip ("stdenv" : deps pkg) (repeat Nothing)
         body = mkApp (mkSym "stdenv.mkDerivation") $ mkNonRecSet
-               [ nixLet "name" (mkStr' (view localName pkg))
-               , nixLet "version" (mkStr' (view version pkg))
-               , nixLet "src" (fetchSrc pkg)
-               , nixLet "buildInputs" (mkList deps') ]
-        deps' = map mkSym ("cmake" : "pkgconfig" : "ros-build-tools" : deps pkg)
+               [ nixKeyVal "name" (mkStr' (view localName pkg))
+               , nixKeyVal "version" (mkStr' (view version pkg))
+               , nixKeyVal "src" (fetchSrc pkg)
+               , nixKeyVal "buildInputs" (mkList deps') ]
+        deps' = map mkSym $ "cmake" : "pkgconfig" : deps pkg
 
 -- | Prefetch the source for a ROS package into the Nix store
 -- recording its hash and list of dependencies.
@@ -149,8 +151,10 @@ getDependencies = fmap (map T.pack . S.toList . S.fromList)
 letPackageSet :: [Package] -> NExpr -> NExpr
 letPackageSet pkgs =
   mkLet [ callPkg
-        , NamedVar (mkSelector "SHLIB") $
+        , nixKeyVal "SHLIB" $
           mkIf (mkSym "stdenv.isDarwin") (mkStr' "dylib") (mkStr' "so")
+        , nixKeyVal "pyPackages" rosPyPackages
+        , nixKeyVal "pyEnv" rosPyEnv
         , NamedVar (mkSelector "rosPackageSet") pkgSet ]
   where callPkg = NamedVar (mkSelector "callPackage") $
                   mkApp (mkSym "stdenv.lib.callPackageWith")
@@ -171,19 +175,65 @@ letPackageSet pkgs =
 -- | Return the list of dependencies that are not among the packages
 -- being defined.
 externalDeps :: [Package] -> [Text]
-externalDeps pkgs = S.toList $ S.difference allDeps internalPackages
+externalDeps pkgs = mapMaybe rosDep2Nix . S.toList
+                  $ S.difference allDeps internalPackages
   where internalPackages = S.fromList $ map (view localName) pkgs
         allDeps = S.fromList $ foldMap deps pkgs
+
+rosPyEnv :: NExpr
+rosPyEnv = mkApp (mkSym "python27.buildEnv.override")
+                 (mkNonRecSet [nixKeyVal "extraLibs" pyPkgs])
+  where pyPkgs = mkWith (mkSym "pyPackages")
+                        (mkList $ map mkSym rosPyDeps)
+
+rosPyPackages :: NExpr
+rosPyPackages =
+  mkOper2 NUpdate
+          (mkApp (mkSym "python27Packages.override")
+                 (mkFunction (FormalName "_")
+                             (mkNonRecSet [nixKeyVal "python"
+                                                     (mkSym "pyEnv.python")])))
+          (mkApp (mkApp (mkSym "callPackage")
+                        (mkPath False "./ros-python-packages.nix"))
+                 (mkNonRecSet [
+                    Inherit Nothing [[StaticKey "fetchurl"]]
+                  , Inherit (Just (mkSym "pyPackages")) $
+                            map (pure . StaticKey)
+                                [ "buildPythonPackage"
+                                , "setuptools"
+                                , "pyyaml"
+                                , "dateutil"
+                                , "argparse"
+                                , "docutils"
+                                , "nose" ]]))
+
+rosHelperPackages :: NExpr
+rosHelperPackages = mkRecSet [
+    call "sip" [ Inherit (Just (mkSym "pyPackages"))
+                               [[StaticKey "buildPythonPackage"]]]
+  , call "console-bridge" []
+  , call "poco" []
+  , call "collada-dom" []
+  , call "urdfdom-headers" []
+  , call "urdfdom" [ Inherit Nothing [ [StaticKey "urdfdom-headers"]
+                                     , [StaticKey "console-bridge"] ]]]
+  where call n = nixKeyVal n 
+               . mkApp (mkApp (mkSym "callPackage")
+                              (mkPath False ("./"<>T.unpack n<>".nix")))
+               . mkNonRecSet
 
 -- | Generate a Nix derivation that depends on all given packages.
 mkMetaPackage :: [Package] -> NExpr
 mkMetaPackage pkgs = mkFunction args body
-  where args = mkFormalSet $ zip ("stdenv" : externalDeps pkgs) (repeat Nothing)
+  where args = mkFormalSet $
+               zip ("stdenv" : "python27" : "python27Packages" : "fetchurl"
+                    : externalDeps pkgs)
+                   (repeat Nothing)
         body = letPackageSet pkgs . mkApp (mkSym "stdenv.mkDerivation") $
                mkNonRecSet
-               [ nixLet "name" (mkStr' "rosPackages")
-               , nixLet "buildInputs" (mkList deps')
-               , nixLet "src" (mkList [ mkSym "nixpkgs" ]) ]
+               [ nixKeyVal "name" (mkStr' "rosPackages")
+               , nixKeyVal "buildInputs" (mkList deps')
+               , nixKeyVal "src" (mkList [ mkSym "nixpkgs" ]) ]
         deps' = map mkSym ["cmake", "pkgconfig", "rosPackageSet"]
 
 data Opts = Opts { _rosinstall :: FilePath
