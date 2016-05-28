@@ -11,8 +11,9 @@ rosPyDeps = [ "numpy", "setuptools", "sphinx", "six", "dateutil", "docutils"
             , "argparse", "pyyaml", "nose", "rosdep", "rosinstall-generator"
             , "wstool", "rosinstall", "catkin-tools", "catkin-pkg", "bloom"
             , "empy", "matplotlib", "pillow", "pydot", "paramiko", "coverage"
-            , "netifaces", "mock", "psutil", "pyqt4", "pyside", "sip"
-            , "pygraphviz" ]
+            , "netifaces", "mock", "psutil", "pyqt4", "pyside"
+            , "(pygraphviz.override { doCheck = false; })"
+            , "(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })"]
 
 -- | Mapping of catkin system dependency names to the corresponding
 -- nixpkgs value. Note that Python dependencies are removed as they
@@ -40,7 +41,8 @@ renamings = aliases <> fromEnv <> notUsed
                   , "python-rosdep"
                   , "python-sip"
                   , "python-vtk"
-                  , "python-yaml" ]
+                  , "python-yaml"
+                  , "python" ]
 
         notUsed = fromList $ map (,"")
                   [ "python-imaging"

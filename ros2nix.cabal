@@ -18,6 +18,7 @@ executable ros2nix
   -- other-extensions:    
   build-depends:       base >=4.8 && <4.9,
                        containers,
+                       data-fix >= 0.0.3 && < 0.1,
                        directory,
                        filepath,
                        hnix >= 0.2 && < 0.3,

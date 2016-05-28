@@ -4,6 +4,7 @@ import Control.Lens hiding (argument)
 import Control.Logging (debug, errorL, setLogLevel, withStdoutLogging, LogLevel(..))
 import Control.Monad (filterM)
 import Data.Bool (bool)
+import Data.Fix (Fix(Fix))
 import Data.List (isSuffixOf)
 import Data.Maybe (catMaybes)
 import qualified Data.Set as S
@@ -33,6 +34,10 @@ testFile = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/src/a
 
 testDistro :: FilePath
 testDistro = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/indigo_perception_ws.rosinstall"
+
+-- nix-shell test:
+-- cabal run -- /nix/store/v4wjb20r1qysw9n4hdxisbkh0mgws7y3-ros-indigo-perception-src/indigo_perception.rosinstall -o indigo_perception.nix
+
 
 data RosPackage = RosPackage { _localName :: Text
                              , _uri       :: Text
@@ -66,13 +71,62 @@ fetchSrc pkg = mkApp (mkSym "fetchurl") $ mkNonRecSet
 -- | Generate a Nix derivation for a 'Package'.
 nixify :: Package -> NExpr
 nixify pkg = mkFunction args body
-  where args = mkFormalSet $ zip ("stdenv" : deps pkg) (repeat Nothing)
-        body = mkApp (mkSym "stdenv.mkDerivation") $ mkNonRecSet
+  where args = mkFormalSet $ zip ("stdenv" : deps') (repeat Nothing)
+        body = mkApp (mkSym "stdenv.mkDerivation") . mkNonRecSet $
                [ nixKeyVal "name" (mkStr' (view localName pkg))
                , nixKeyVal "version" (mkStr' (view version pkg))
                , nixKeyVal "src" (fetchSrc pkg)
-               , nixKeyVal "buildInputs" (mkList deps') ]
-        deps' = map mkSym $ "cmake" : "pkgconfig" : deps pkg
+               , nixKeyVal "propagatedBuildInputs"
+                           (extraInputs . mkList $ map mkSym deps')
+               , Inherit Nothing (map (pure . StaticKey)
+                                      ["cmakeFlags", "preBuild"])]
+               ++ pkgFixes
+        deps' = "cmake" : "pkgconfig" : "gtest" : "pyEnv"
+              : mapMaybe rosDep2Nix (deps pkg) ++ extraDeps
+        pclDarwinDeps = ["libobjc", "Cocoa"]
+        extraDeps = case view localName pkg of
+                      "image_view" -> ["glib", "pango"]
+                      "pcl_ros" -> pclDarwinDeps
+                      _ -> []
+        extraInputs = case view localName pkg of
+                        "image_view" ->
+                          let aux (Fix (NList ds)) =
+                                mkList $ ds ++ map mkSym [ "gtk2.out"
+                                                         , "gtk2.dev"
+                                                         , "glib.out"
+                                                         , "glib.dev"
+                                                         , "pango"]
+                              aux _ = error "extraInputs applied to something \
+                                            \other than a list"
+                          in aux
+                        "pcl_ros" ->
+                          let aux (Fix (NList ds)) =
+                                mkOper2 NConcat
+                                        (mkList (filter (not . (`elem` pclDarwinDeps)
+                                                         . T.pack . show . prettyNix)
+                                                        ds))
+                                        (mkApp (mkApp (mkSym "stdenv.lib.optionals") (mkSym "stdenv.isDarwin")) (mkList $ map mkSym pclDarwinDeps))
+                              aux _ = error "extraInputs applied to something \
+                                            \other than a list"
+                          in aux
+                        _ -> id
+        pkgFixes = case view localName pkg of
+                     "catkin" -> [nixKeyVal "patchPhase" (Fix (NStr (NString Indented [ Plain "sed -i 's|#!@PYTHON_EXECUTABLE@|#!", Antiquoted (mkSym "pyEnv.python.passthru.interpreter"), Plain "|' ./cmake/templates/_setup_util.py.in"])))]
+                     "image_view" ->
+                       [ nixKeyVal "NIX_CFLAGS_COMPILE" (Fix (NStr (NString DoubleQuoted [
+                           Plain "-I"
+                         , Antiquoted (mkSym "glib.out")
+                         , Plain "/lib/glib-2.0/include -I"
+                         , Antiquoted (mkSym "gtk2.dev")
+                         , Plain "/include/gtk-2.0 -I"
+                         , Antiquoted (mkSym "glib.dev")
+                         , Plain "/include/glib-2.0 -I"
+                         , Antiquoted (mkSym "pango.dev")
+                         , Plain "/include/pango-1.0 -I"
+                         , Antiquoted (mkSym "gtk2.out")
+                         , Plain "/lib/gtk-2.0/include"
+                       ])))]
+                     _ -> []
 
 -- | Prefetch the source for a ROS package into the Nix store
 -- recording its hash and list of dependencies.
@@ -153,12 +207,37 @@ letPackageSet pkgs =
   mkLet [ callPkg
         , nixKeyVal "SHLIB" $
           mkIf (mkSym "stdenv.isDarwin") (mkStr' "dylib") (mkStr' "so")
+        , nixKeyVal "cmakeFlags" cmakeFlags
+        , nixKeyVal "preBuild" prepEnv
         , nixKeyVal "pyPackages" rosPyPackages
         , nixKeyVal "pyEnv" rosPyEnv
         , NamedVar (mkSelector "rosPackageSet") pkgSet ]
   where callPkg = NamedVar (mkSelector "callPackage") $
                   mkApp (mkSym "stdenv.lib.callPackageWith")
                         pkgSetName
+        cmakeFlags = mkList $ map (Fix . NStr . NString DoubleQuoted)
+                     [ [ Plain "-DPYTHON_LIBRARY="
+                       , Antiquoted (mkSym "pyEnv")
+                       , Plain "/lib/libpython2.7."
+                       , Antiquoted (mkSym "SHLIB") ]
+                     , [ Plain "-DPYTHON_INCLUDE_DIR="
+                       , Antiquoted (mkSym "pyEnv")
+                       , Plain "/include/python2.7" ]
+                     , [ Plain "-DPYTHON_EXECUTABLE="
+                       , Antiquoted (mkSym "pyEnv")
+                       , Plain "/bin/python" ]
+                     , [ Plain "-DEIGEN_ROOT_DIR="
+                       , Antiquoted (mkSym "eigen") ]
+                     , [ Plain "-DEIGEN3_INCLUDE_DIR="
+                       , Antiquoted (mkSym "eigen")
+                       , Plain "/include/eigen3" ] ]
+        -- prepEnv = mkStr Indented . T.unlines $
+        prepEnv = Fix . NStr . NString Indented $
+                  [ Plain "HOME=$out\n"
+                  , Plain "export TERM=xterm-256color\n"
+                  , Plain "export PYTHONHOME="
+                  , Antiquoted (mkSym "pyEnv.python")
+                  , Plain "\n" ]
         catkinBuild = mkStr Indented $ T.unlines [
                         "source $stdenv/setup"
                       , "mkdir -p $out"
@@ -168,14 +247,21 @@ letPackageSet pkgs =
                       , "catkin config --install --install-space $out"
                       , "catkin build -DCMAKE_BUILD_TYPE=Release -DPYTHON_LIBRARY=${python}/lib/libpython2.7.${SHLIB} -DPYTHON_INCLUDE_DIR=${python}/include/python2.7 -DPYTHON_EXECUTABLE=${python.passthru.interpreter} -DEIGEN_ROOT_DIR=${eigen} -DEIGEN3_INCLUDE_DIR=${eigen}/include/eigen3" ]
         pkgSetName = mkSym "rosPackageSet"
-        pkgSet = mkNonRecSet (map defPkg pkgs)
+        pkgSet = mkNonRecSet $
+                 Inherit Nothing
+                         (map (pure . StaticKey)
+                              ("stdenv" : "pyEnv" : "glib" : "pango"
+                               : "libobjc" : "Cocoa"
+                               : externalDeps pkgs))
+                 : (map defPkg pkgs)
         defPkg pkg = NamedVar (mkSelector (pkg ^. localName)) $
-                     mkApp (mkSym "callPackage") (nixify pkg)
+                     mkApp (mkApp (mkSym "callPackage") (nixify pkg))
+                           (mkNonRecSet [])
 
 -- | Return the list of dependencies that are not among the packages
 -- being defined.
 externalDeps :: [Package] -> [Text]
-externalDeps pkgs = mapMaybe rosDep2Nix . S.toList
+externalDeps pkgs = S.toList . S.fromList . mapMaybe rosDep2Nix . S.toList
                   $ S.difference allDeps internalPackages
   where internalPackages = S.fromList $ map (view localName) pkgs
         allDeps = S.fromList $ foldMap deps pkgs
@@ -217,7 +303,7 @@ rosHelperPackages = mkRecSet [
   , call "urdfdom-headers" []
   , call "urdfdom" [ Inherit Nothing [ [StaticKey "urdfdom-headers"]
                                      , [StaticKey "console-bridge"] ]]]
-  where call n = nixKeyVal n 
+  where call n = nixKeyVal n
                . mkApp (mkApp (mkSym "callPackage")
                               (mkPath False ("./"<>T.unpack n<>".nix")))
                . mkNonRecSet
@@ -227,14 +313,19 @@ mkMetaPackage :: [Package] -> NExpr
 mkMetaPackage pkgs = mkFunction args body
   where args = mkFormalSet $
                zip ("stdenv" : "python27" : "python27Packages" : "fetchurl"
+                    : "glib" : "pango" : "gdk_pixbuf" : "atk"
+                    : "libobjc" : "Cocoa"
                     : externalDeps pkgs)
                    (repeat Nothing)
         body = letPackageSet pkgs . mkApp (mkSym "stdenv.mkDerivation") $
                mkNonRecSet
-               [ nixKeyVal "name" (mkStr' "rosPackages")
-               , nixKeyVal "buildInputs" (mkList deps')
-               , nixKeyVal "src" (mkList [ mkSym "nixpkgs" ]) ]
-        deps' = map mkSym ["cmake", "pkgconfig", "rosPackageSet"]
+                 [ nixKeyVal "name" (mkStr' "rosPackages")
+                 , nixKeyVal "buildInputs" (deps')
+                 , nixKeyVal "src" (mkList [ {-mkSym "nixpkgs"-} ]) ]
+        deps' = mkOper2 NConcat
+                        (mkList $ map mkSym ["cmake", "pkgconfig", "glib"])
+                        (mkApp (mkSym "stdenv.lib.attrValues")
+                               (mkSym "rosPackageSet"))
 
 data Opts = Opts { _rosinstall :: FilePath
                  , _outFile :: Maybe FilePath }
