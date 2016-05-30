@@ -54,6 +54,10 @@ makeLenses ''Package
 instance HasRosPackage Package where
   rosPackage = lens rosPackage' (\(Package _ s d) r -> Package r s d)
 
+versionCleanup :: Text -> Text
+versionCleanup = T.dropWhile (not . (`elem` (['0'..'9'] :: [Char])))
+               . T.takeWhileEnd (`elem` ("-.0123456789" :: [Char]))
+
 -- | Helper for producing a double-quoted Nix string.
 mkStr' :: Text -> NExpr
 mkStr' = mkStr DoubleQuoted
@@ -71,15 +75,37 @@ fetchSrc pkg = mkApp (mkSym "fetchurl") $ mkNonRecSet
 -- | Generate a Nix derivation for a 'Package'.
 nixify :: Package -> NExpr
 nixify pkg = mkFunction args body
-  where args = mkFormalSet $ zip ("stdenv" : deps') (repeat Nothing)
+  where args = mkFormalSet $ zip ("stdenv" : "makeWrapper" : "wrapPython" : deps')
+                                 (repeat Nothing)
         body = mkApp (mkSym "stdenv.mkDerivation") . mkNonRecSet $
                [ nixKeyVal "name" (mkStr' (view localName pkg))
-               , nixKeyVal "version" (mkStr' (view version pkg))
+               , nixKeyVal "version" $
+                 mkStr' (versionCleanup $ view version pkg)
                , nixKeyVal "src" (fetchSrc pkg)
+               -- , nixKeyVal "pythonPath"
+               --             (mkList (map mkSym $
+               --                      "pyEnv" : mapMaybe rosDep2Nix (deps pkg)))
+               , nixKeyVal "nativeBuildInputs" (mkList [mkSym "wrapPython"])
                , nixKeyVal "propagatedBuildInputs"
                            (extraInputs . mkList $ map mkSym deps')
+               , nixKeyVal "postInstall" . mkStr Indented $
+                 T.unlines [ "if [ -f './package.xml' ]; then"
+                           , "  cp package.xml $out"
+                           , "fi"
+                           , "if [ -d './resources' ]; then"
+                           , "  cp -r resources $out"
+                           , "fi"
+                           , "if [ -d './env-hooks' ]; then"
+                           , "  cp -r env-hooks $out"
+                           , "fi" ]
+               -- , nixKeyVal "postInstall" . mkStr Indented
+               --   $ T.unlines [ "if [ -f './setup.py' ]; then "
+               --               , "  wrapPythonPrograms"
+               --               , "fi" ]
                , Inherit Nothing (map (pure . StaticKey)
-                                      ["cmakeFlags", "preBuild"])]
+                                      [ "cmakeFlags"
+                                      -- , "preBuild"
+                                      ]) ]
                ++ pkgFixes
         deps' = "cmake" : "pkgconfig" : "gtest" : "pyEnv"
               : mapMaybe rosDep2Nix (deps pkg) ++ extraDeps
@@ -208,7 +234,7 @@ letPackageSet pkgs =
         , nixKeyVal "SHLIB" $
           mkIf (mkSym "stdenv.isDarwin") (mkStr' "dylib") (mkStr' "so")
         , nixKeyVal "cmakeFlags" cmakeFlags
-        , nixKeyVal "preBuild" prepEnv
+        -- , nixKeyVal "preBuild" prepEnv
         , nixKeyVal "pyPackages" rosPyPackages
         , nixKeyVal "pyEnv" rosPyEnv
         , NamedVar (mkSelector "rosPackageSet") pkgSet ]
@@ -231,13 +257,12 @@ letPackageSet pkgs =
                      , [ Plain "-DEIGEN3_INCLUDE_DIR="
                        , Antiquoted (mkSym "eigen")
                        , Plain "/include/eigen3" ] ]
-        -- prepEnv = mkStr Indented . T.unlines $
-        prepEnv = Fix . NStr . NString Indented $
-                  [ Plain "HOME=$out\n"
-                  , Plain "export TERM=xterm-256color\n"
-                  , Plain "export PYTHONHOME="
-                  , Antiquoted (mkSym "pyEnv.python")
-                  , Plain "\n" ]
+        -- prepEnv = Fix . NStr . NString Indented $
+        --           [ Plain "HOME=$out\n"
+        --           , Plain "export TERM=xterm-256color\n"
+        --           , Plain "export PYTHONHOME="
+        --           , Antiquoted (mkSym "pyEnv.python")
+        --           , Plain "\n" ]
         catkinBuild = mkStr Indented $ T.unlines [
                         "source $stdenv/setup"
                       , "mkdir -p $out"
@@ -251,8 +276,10 @@ letPackageSet pkgs =
                  Inherit Nothing
                          (map (pure . StaticKey)
                               ("stdenv" : "pyEnv" : "glib" : "pango"
-                               : "libobjc" : "Cocoa"
+                               : "makeWrapper" : "libobjc" : "Cocoa"
                                : externalDeps pkgs))
+                 : Inherit (Just (mkSym "pyPackages"))
+                           [[StaticKey "wrapPython"]]
                  : (map defPkg pkgs)
         defPkg pkg = NamedVar (mkSelector (pkg ^. localName)) $
                      mkApp (mkApp (mkSym "callPackage") (nixify pkg))
@@ -313,7 +340,7 @@ mkMetaPackage :: [Package] -> NExpr
 mkMetaPackage pkgs = mkFunction args body
   where args = mkFormalSet $
                zip ("stdenv" : "python27" : "python27Packages" : "fetchurl"
-                    : "glib" : "pango" : "gdk_pixbuf" : "atk"
+                    : "glib" : "pango" : "gdk_pixbuf" : "atk" : "makeWrapper"
                     : "libobjc" : "Cocoa"
                     : externalDeps pkgs)
                    (repeat Nothing)
@@ -321,7 +348,23 @@ mkMetaPackage pkgs = mkFunction args body
                mkNonRecSet
                  [ nixKeyVal "name" (mkStr' "rosPackages")
                  , nixKeyVal "buildInputs" (deps')
-                 , nixKeyVal "src" (mkList [ {-mkSym "nixpkgs"-} ]) ]
+                 , nixKeyVal "src" (mkList [])
+                 , nixKeyVal "shellHook" . Fix . NStr $ NString Indented  [
+                     Plain "export ROS_PACKAGE_PATH="
+                   , Antiquoted (mkApp
+                                   (mkApp
+                                      (mkSym "stdenv.lib.concatStringsSep")
+                                      (mkStr' ":"))
+                                   (mkApp
+                                      (mkApp
+                                         (mkSym "stdenv.lib.filter")
+                                         (mkFunction (FormalName "x")
+                                                     (mkOper
+                                                        NNot
+                                                        (mkApp (mkSym "isNull")
+                                                               (mkSym "x")))))
+                                      (mkApp (mkSym "stdenv.lib.attrValues")
+                                             (mkSym "rosPackageSet"))))]]
         deps' = mkOper2 NConcat
                         (mkList $ map mkSym ["cmake", "pkgconfig", "glib"])
                         (mkApp (mkSym "stdenv.lib.attrValues")

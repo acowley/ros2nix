@@ -7,7 +7,8 @@ let localPackages = rec {
       urdfdom-headers = callPackage ./urdfdom-headers.nix {};
       urdfdom = callPackage ./urdfdom.nix { inherit urdfdom-headers console-bridge; };
     };
-in callPackage ./indigo_perception.nix {
+# in callPackage ./indigo_perception.nix {
+in callPackage ./indigo_core.nix {
     inherit (nixpkgs) boost;
     uuid = null;
     inherit (localPackages) console-bridge poco;
