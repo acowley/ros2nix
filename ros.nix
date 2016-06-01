@@ -10,8 +10,9 @@ let localPackages = rec {
 # in callPackage ./indigo_perception.nix {
 in callPackage ./indigo_core.nix {
     inherit (nixpkgs) boost;
-    uuid = null;
-    inherit (localPackages) console-bridge poco;
+    # uuid = null;
+    inherit (localPackages) console-bridge;
+    # inherit (localPackage) poco;
     inherit (darwin) libobjc;
     inherit (darwin.apple_sdk.frameworks) Cocoa;
    }
