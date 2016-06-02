@@ -42,7 +42,8 @@ renamings = aliases <> fromEnv <> notUsed
                   , "python-sip"
                   , "python-vtk"
                   , "python-yaml"
-                  , "python" ]
+                  , "python"
+                  , "cmake" ]
 
         notUsed = fromList $ map (,"")
                   [ "python-imaging"
