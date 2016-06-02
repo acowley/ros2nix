@@ -20,7 +20,6 @@ import Nix.Pretty (prettyNix)
 import Nix.Types
 import NixHelpers
 import Options.Applicative
-import PythonSupport
 import RosDep2Nix (rosPyDeps, rosDep2Nix)
 import System.Directory (doesFileExist, getDirectoryContents, doesDirectoryExist)
 import System.FilePath ((</>))
@@ -75,17 +74,12 @@ fetchSrc pkg = mkApp (mkSym "fetchurl") $ mkNonRecSet
 -- | Generate a Nix derivation for a 'Package'.
 nixify :: Package -> NExpr
 nixify pkg = mkFunction args body
-  where args = mkFormalSet $ zip ("stdenv" : builder ++ deps') (repeat Nothing)
-        buildType' = case (buildType pkg, "cmake" `elem` deps pkg) of
-                       (CMake, _) -> Just CMake
-                       (_, True) -> Nothing
-                       (Python, _) -> Just Python
-        mkDeriv = case buildType' of
-                    Nothing -> "stdenv.mkDerivation"
-                    Just b -> case b of
-                                CMake -> "stdenv.mkDerivation"
-                                Python -> "buildPythonPackage"
-        body = mkApp (mkSym mkDeriv) . mkNonRecSet $
+  where args = mkFormalSet $ zip ("stdenv" : deps') (repeat Nothing)
+        mkDeriv = case buildType pkg of
+                    CMake -> mkApp (mkSym "stdenv.mkDerivation")
+                    Python -> mkApp (mkSym "stdenv.mkDerivation")
+                            . mkApp (mkSym "pyBuild")
+        body = mkDeriv . mkNonRecSet $
                [ nixKeyVal "name" (mkStr' (view localName pkg))
                , nixKeyVal "version" $
                  mkStr' (versionCleanup $ view version pkg)
@@ -104,9 +98,6 @@ nixify pkg = mkFunction args body
                            , "fi" ]
                , Inherit Nothing (map (pure . StaticKey) ["cmakeFlags"]) ]
                ++ pkgFixes
-        builder = case buildType' of
-                    Just Python -> ["buildPythonPackage"]
-                    _ -> []
         deps' = "cmake" : "pkgconfig" : "gtest" : "pyEnv"
               : mapMaybe rosDep2Nix (deps pkg) ++ extraDeps
         pclDarwinDeps = ["libobjc", "Cocoa"]
@@ -144,7 +135,20 @@ nixify pkg = mkFunction args body
               [ nixKeyVal "patchPhase" $
                 mkIndented [ Plain "sed -i 's|#!@PYTHON_EXECUTABLE@|#!"
                            , Antiquoted (mkSym "pyEnv.python.passthru.interpreter")
-                           , Plain "|' ./cmake/templates/_setup_util.py.in" ]]
+                           , Plain "|' ./cmake/templates/_setup_util.py.in\n"
+                           , Plain "sed -i s/PYTHON_EXECUTABLE/SHELL/ ./cmake/catkin_package_xml.cmake\n" ]]
+            "genmsg" ->
+              [ nixKeyVal "patchPhase" $ mkStr Indented
+                "sed -i 's/${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT}/${GENMSG_CHECK_DEPS_SCRIPT}/' ./cmake/pkg-genmsg.cmake.em\n" ]
+            "genpy" ->
+              [ nixKeyVal "patchPhase" $ mkStr Indented
+                "sed -i 's/${PYTHON_EXECUTABLE} //' ./cmake/genpy-extras.cmake.em" ]
+            "genlisp" ->
+              [ nixKeyVal "patchPhase" $ mkStr Indented
+                "sed -i 's/${PYTHON_EXECUTABLE} //' ./cmake/genlisp-extras.cmake.em" ]
+            "gencpp" ->
+              [ nixKeyVal "patchPhase" $ mkStr Indented
+                "sed -i 's/${PYTHON_EXECUTABLE} //' ./cmake/gencpp-extras.cmake.em" ]
             "image_view" ->
               [ nixKeyVal "NIX_CFLAGS_COMPILE"
                 $ mkDoubleQ [
@@ -254,12 +258,28 @@ letPackageSet pkgs =
           mkIf (mkSym "stdenv.isDarwin") (mkStr' "dylib") (mkStr' "so")
         , nixKeyVal "cmakeFlags" cmakeFlags
         -- , nixKeyVal "preBuild" prepEnv
+        , nixKeyVal "pyCallPackage" pyCallPkg
+        , nixKeyVal "pyBuild" pyBuild
         , nixKeyVal "pyPackages" rosPyPackages
         , nixKeyVal "pyEnv" rosPyEnv
         , NamedVar (mkSelector "rosPackageSet") pkgSet ]
   where callPkg = NamedVar (mkSelector "callPackage") $
                   mkApp (mkSym "stdenv.lib.callPackageWith")
                         pkgSetName
+        pyCallPkg = mkApp (mkSym "stdenv.lib.callPackageWith")
+                          (mkNonRecSet
+                             [ Inherit (Just (mkSym "pyPackages"))
+                                       (map (pure . StaticKey)
+                                            ["python", "setuptools", "wrapPython"])
+                             , Inherit (Just (mkSym "stdenv")) [[StaticKey "lib"]]
+                             , Inherit Nothing
+                                       (map (pure . StaticKey)
+                                            [ "ensureNewerSourcesHook", "stdenv"
+                                            , "fetchurl", "makeWrapper", "unzip"])
+                             , nixKeyVal "callPackage" (mkSym "pyCallPackage")])
+        pyBuild = mkApp2 (mkSym "pyCallPackage")
+                         (mkPath False "./python-install.nix")
+                         (mkNonRecSet [])
         cmakeFlags = mkList $ map mkDoubleQ
                      [ [ Plain "-DPYTHON_LIBRARY="
                        , Antiquoted (mkSym "pyEnv")
@@ -294,7 +314,7 @@ letPackageSet pkgs =
         pkgSet = mkNonRecSet $
                  Inherit Nothing
                          (map (pure . StaticKey)
-                              ("stdenv" : "pyEnv" : "glib" : "pango"
+                              ("stdenv" : "pyEnv" : "glib" : "pango" : "cmake"
                                : "libobjc" : "Cocoa" : externalDeps pkgs))
                  : Inherit (Just (mkSym "pyPackages"))
                            [[StaticKey "buildPythonPackage"]]
@@ -357,8 +377,9 @@ mkMetaPackage :: [Package] -> NExpr
 mkMetaPackage pkgs = mkFunction args body
   where args = mkFormalSet $
                zip ("stdenv" : "python27" : "python27Packages" : "fetchurl"
-                    : "glib" : "pango" : "gdk_pixbuf" : "atk"
-                    : "libobjc" : "Cocoa" : externalDeps pkgs)
+                    : "glib" : "pango" : "gdk_pixbuf" : "atk" : "makeWrapper"
+                    : "unzip" : "ensureNewerSourcesHook" : "libobjc" : "Cocoa"
+                    : "cmake" : externalDeps pkgs)
                    (repeat Nothing)
         body = letPackageSet pkgs . mkApp (mkSym "stdenv.mkDerivation") $
                mkNonRecSet
@@ -367,7 +388,7 @@ mkMetaPackage pkgs = mkFunction args body
                  , nixKeyVal "src" (mkList [])
                  , nixKeyVal "shellHook" $ mkIndented  [
                      Plain "export ROS_PACKAGE_PATH="
-                   , Antiquoted (mkApp2 
+                   , Antiquoted (mkApp2
                                    (mkSym "stdenv.lib.concatStringsSep")
                                    (mkStr' ":")
                                    (mkApp2
