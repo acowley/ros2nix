@@ -86,17 +86,7 @@ nixify pkg = mkFunction args body
                , nixKeyVal "src" (fetchSrc pkg)
                , nixKeyVal "propagatedBuildInputs"
                            (extraInputs . mkList $ map mkSym deps')
-               , nixKeyVal "postInstall" . mkStr Indented $
-                 T.unlines [ "if [ -f './package.xml' ]; then"
-                           , "  cp package.xml $out"
-                           , "fi"
-                           , "if [ -d './resources' ]; then"
-                           , "  cp -r resources $out"
-                           , "fi"
-                           , "if [ -d './env-hooks' ]; then"
-                           , "  cp -r env-hooks $out"
-                           , "fi" ]
-               , Inherit Nothing (map (pure . StaticKey) ["cmakeFlags"]) ]
+               , Inherit Nothing (map (pure . StaticKey) ["cmakeFlags", "postInstall"]) ]
                ++ pkgFixes
         deps' = "cmake" : "pkgconfig" : "gtest" : "pyEnv"
               : mapMaybe rosDep2Nix (deps pkg) ++ extraDeps
@@ -136,7 +126,14 @@ nixify pkg = mkFunction args body
                 mkIndented [ Plain "sed -i 's|#!@PYTHON_EXECUTABLE@|#!"
                            , Antiquoted (mkSym "pyEnv.python.passthru.interpreter")
                            , Plain "|' ./cmake/templates/_setup_util.py.in\n"
-                           , Plain "sed -i s/PYTHON_EXECUTABLE/SHELL/ ./cmake/catkin_package_xml.cmake\n" ]]
+                           , Plain "sed -i 's/PYTHON_EXECUTABLE/SHELL/' ./cmake/catkin_package_xml.cmake\n"
+                           , Plain "sed -i 's|#!/usr/bin/env bash|"
+                           , Antiquoted (mkSym "stdenv.shell")
+                           , Plain "|' ./cmake/templates/setup.bash.in\n"
+                           , Plain "sed -i 's|#!/usr/bin/env sh|"
+                           , Antiquoted (mkSym "stdenv.shell")
+                           , Plain "|' ./cmake/templates/setup.sh.in\n"
+                           ]]
             "genmsg" ->
               [ nixKeyVal "patchPhase" $ mkStr Indented
                 "sed -i 's/${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT}/${GENMSG_CHECK_DEPS_SCRIPT}/' ./cmake/pkg-genmsg.cmake.em\n" ]
@@ -257,7 +254,20 @@ letPackageSet pkgs =
         , nixKeyVal "SHLIB" $
           mkIf (mkSym "stdenv.isDarwin") (mkStr' "dylib") (mkStr' "so")
         , nixKeyVal "cmakeFlags" cmakeFlags
+        , nixKeyVal "postInstall" . mkStr Indented
+          $ T.unlines [ "pushd .."
+                      , "if [ -f 'package.xml' ]; then"
+                      , "  cp package.xml $out"
+                      , "fi"
+                      , "if [ -d 'resources' ]; then"
+                      , "  cp -r resources $out"
+                      , "fi"
+                      , "if [ -d 'env-hooks' ]; then"
+                      , "  cp -r env-hooks $out"
+                      , "fi"
+                      , "popd" ]
         -- , nixKeyVal "preBuild" prepEnv
+        , nixKeyVal "rosShellHook" rosShellHook
         , nixKeyVal "pyCallPackage" pyCallPkg
         , nixKeyVal "pyBuild" pyBuild
         , nixKeyVal "pyPackages" rosPyPackages
@@ -280,42 +290,43 @@ letPackageSet pkgs =
         pyBuild = mkApp2 (mkSym "pyCallPackage")
                          (mkPath False "./python-install.nix")
                          (mkNonRecSet [])
+        rosShellHook = mkFunction
+                         (FormalName "pkg")
+                         (mkIndented
+                            [ Plain "if [ -d \""
+                            , Antiquoted (mkSym "pkg")
+                            , Plain "/env-hooks\" ]; then\n"
+                            , Plain "  for i in $(find \""
+                            , Antiquoted (mkSym "pkg")
+                            , Plain "/env-hooks\" -name \"*.sh\"); do\n"
+                            , Plain "    source \"$i\"\n"
+                            , Plain "  done\n"
+                            , Plain "fi\n" ])
         cmakeFlags = mkList $ map mkDoubleQ
-                     [ [ Plain "-DPYTHON_LIBRARY="
-                       , Antiquoted (mkSym "pyEnv")
-                       , Plain "/lib/libpython2.7."
-                       , Antiquoted (mkSym "SHLIB") ]
+                     ([ [ Plain "-DPYTHON_LIBRARY="
+                        , Antiquoted (mkSym "pyEnv")
+                        , Plain "/lib/libpython2.7."
+                        , Antiquoted (mkSym "SHLIB") ]
                      , [ Plain "-DPYTHON_INCLUDE_DIR="
                        , Antiquoted (mkSym "pyEnv")
                        , Plain "/include/python2.7" ]
                      , [ Plain "-DPYTHON_EXECUTABLE="
                        , Antiquoted (mkSym "pyEnv")
-                       , Plain "/bin/python" ]
-                     , [ Plain "-DEIGEN_ROOT_DIR="
-                       , Antiquoted (mkSym "eigen") ]
-                     , [ Plain "-DEIGEN3_INCLUDE_DIR="
-                       , Antiquoted (mkSym "eigen")
-                       , Plain "/include/eigen3" ] ]
-        -- prepEnv = Fix . NStr . NString Indented $
-        --           [ Plain "HOME=$out\n"
-        --           , Plain "export TERM=xterm-256color\n"
-        --           , Plain "export PYTHONHOME="
-        --           , Antiquoted (mkSym "pyEnv.python")
-        --           , Plain "\n" ]
-        -- catkinBuild = mkStr Indented $ T.unlines [
-        --                 "source $stdenv/setup"
-        --               , "mkdir -p $out"
-        --               , "HOME=$out"
-        --               , "export TERM=xterm-256color"
-        --               , "export PYTHONHOME=${python}"
-        --               , "catkin config --install --install-space $out"
-        --               , "catkin build -DCMAKE_BUILD_TYPE=Release -DPYTHON_LIBRARY=${python}/lib/libpython2.7.${SHLIB} -DPYTHON_INCLUDE_DIR=${python}/include/python2.7 -DPYTHON_EXECUTABLE=${python.passthru.interpreter} -DEIGEN_ROOT_DIR=${eigen} -DEIGEN3_INCLUDE_DIR=${eigen}/include/eigen3" ]
+                       , Plain "/bin/python" ]] ++
+                     if "eigen" `elem` edeps
+                     then [ [ Plain "-DEIGEN_ROOT_DIR="
+                            , Antiquoted (mkSym "eigen") ]
+                          , [ Plain "-DEIGEN3_INCLUDE_DIR="
+                            , Antiquoted (mkSym "eigen")
+                            , Plain "/include/eigen3" ] ]
+                     else [])
         pkgSetName = mkSym "rosPackageSet"
+        edeps = externalDeps pkgs
         pkgSet = mkNonRecSet $
                  Inherit Nothing
                          (map (pure . StaticKey)
                               ("stdenv" : "pyEnv" : "glib" : "pango" : "cmake"
-                               : "libobjc" : "Cocoa" : externalDeps pkgs))
+                               : "libobjc" : "Cocoa" : edeps))
                  : Inherit (Just (mkSym "pyPackages"))
                            [[StaticKey "buildPythonPackage"]]
                  : (map defPkg pkgs)
@@ -386,8 +397,8 @@ mkMetaPackage pkgs = mkFunction args body
                  [ nixKeyVal "name" (mkStr' "rosPackages")
                  , nixKeyVal "buildInputs" deps'
                  , nixKeyVal "src" (mkList [])
-                 , nixKeyVal "shellHook" $ mkIndented  [
-                     Plain "export ROS_PACKAGE_PATH="
+                 , nixKeyVal "shellHook" $ mkIndented
+                   [ Plain "export ROS_PACKAGE_PATH="
                    , Antiquoted (mkApp2
                                    (mkSym "stdenv.lib.concatStringsSep")
                                    (mkStr' ":")
@@ -395,7 +406,16 @@ mkMetaPackage pkgs = mkFunction args body
                                       (mkSym "stdenv.lib.filter")
                                       (mkSym "builtins.isAttrs")
                                       (mkApp (mkSym "stdenv.lib.attrValues")
-                                             (mkSym "rosPackageSet"))))]]
+                                             (mkSym "rosPackageSet"))))
+                   , Plain "\n"
+                   , Antiquoted (mkApp3 (mkSym "stdenv.lib.concatMapStringsSep")
+                                        (mkStr' "\n")
+                                        (mkSym "rosShellHook")
+                                        (mkApp2
+                                           (mkSym "stdenv.lib.filter")
+                                           (mkSym "builtins.isAttrs")
+                                           (mkApp (mkSym "stdenv.lib.attrValues")
+                                                  (mkSym "rosPackageSet")))) ]]
         deps' = mkOper2 NConcat
                         (mkList $ map mkSym ["cmake", "pkgconfig", "glib"])
                         (mkApp2
