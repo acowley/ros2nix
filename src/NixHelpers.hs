@@ -11,6 +11,10 @@ mkStr' = mkStr DoubleQuoted
 mkApp2 :: NExpr -> NExpr -> NExpr -> NExpr
 mkApp2 f x = mkApp (mkApp f x)
 
+-- | @mkApp3 f x y z@ applies function @f@ to three arguments.
+mkApp3 :: NExpr -> NExpr -> NExpr -> NExpr -> NExpr
+mkApp3 f x = mkApp . mkApp2 f x
+
 -- | Make an string literal with plain and antiquoted
 -- components.
 mkString :: StringKind -> [Antiquoted Text NExpr] -> NExpr
