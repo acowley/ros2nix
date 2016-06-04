@@ -1,14 +1,11 @@
 {-# LANGUAGE FlexibleContexts, OverloadedStrings, QuasiQuotes, TemplateHaskell #-}
-{- OPTIONS_GHC -fdefer-type-errors -Wall #-}
 import Control.Lens hiding (argument)
 import Control.Logging (debug, errorL, setLogLevel, withStdoutLogging, LogLevel(..))
 import Control.Monad (filterM)
 import Data.Bool (bool)
 import Data.Fix (Fix(Fix))
 import Data.List (isSuffixOf)
-import Data.Maybe (catMaybes)
-import Data.Maybe (mapMaybe)
-import Data.Maybe (maybeToList)
+import Data.Maybe (catMaybes, mapMaybe, maybeToList)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -24,8 +21,7 @@ import RosDep2Nix (rosPyDeps, rosDep2Nix)
 import System.Directory (doesFileExist, getDirectoryContents, doesDirectoryExist)
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
-import System.Process (callProcess)
-import System.Process (readCreateProcessWithExitCode, proc)
+import System.Process (callProcess, readCreateProcessWithExitCode, proc)
 import Text.XML.HXT.Core
 
 testFile :: FilePath
@@ -37,7 +33,6 @@ testDistro = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/ind
 -- nix-shell tests:
 -- cabal run -- /nix/store/v4wjb20r1qysw9n4hdxisbkh0mgws7y3-ros-indigo-perception-src/indigo_perception.rosinstall -o indigo_perception.nix
 -- cabal run -- /nix/store/1mbl3dsw159llkry7q3p4030mk67aqv3-ros-indigo-ros_core-src/indigo_ros_core.rosinstall -o indigo_core.nix
-
 
 data RosPackage = RosPackage { _localName :: Text
                              , _uri       :: Text
@@ -58,12 +53,12 @@ instance HasRosPackage Package where
   rosPackage = lens rosPackage' (\(Package _ s d b) r -> Package r s d b)
 
 versionCleanup :: Text -> Text
-versionCleanup = T.dropWhile (not . (`elem` (['0'..'9'] :: [Char])))
-               . T.takeWhileEnd (`elem` ("-.0123456789" :: [Char]))
+versionCleanup = T.dropWhile (not . (`elem` (['0'..'9'] :: String)))
+               . T.takeWhileEnd (`elem` ("-.0123456789" :: String))
 
 -- | Helper to make a Nix name-value binding
 nixKeyVal :: Text -> NExpr -> Binding NExpr
-nixKeyVal k v = NamedVar (mkSelector k) v
+nixKeyVal k = NamedVar (mkSelector k)
 
 -- | Generate a @fetchurl@ Nix expression.
 fetchSrc :: Package -> NExpr
@@ -329,7 +324,7 @@ letPackageSet pkgs =
                                : "libobjc" : "Cocoa" : edeps))
                  : Inherit (Just (mkSym "pyPackages"))
                            [[StaticKey "buildPythonPackage"]]
-                 : (map defPkg pkgs)
+                 : map defPkg pkgs
         defPkg pkg = NamedVar (mkSelector (pkg ^. localName)) $
                      mkApp2 (mkSym "callPackage") (nixify pkg) (mkNonRecSet [])
 
@@ -431,7 +426,7 @@ optParser :: Parser Opts
 optParser = Opts
             <$> strArgument (metavar "ROSINSTALL"
                              <> help ".rosinstall file defining a ROS distro")
-            <*> (optional $ strOption $
+            <*> optional (strOption $
                  long "output" <> short 'o' <> metavar "OUTFILE"
                  <> help "Write generated Nix expression to OUTFILE")
 
