@@ -3,14 +3,11 @@
 { python, setuptools
 , wrapPython, callPackage, lib, ensureNewerSourcesHook }:
 let
-  setuppy = <nixpkgs> + /pkgs/development/python-modules/generic/run_setup.py;
-  bootstrapped-pip = callPackage (<nixpkgs> + /pkgs/development/python-modules/bootstrapped-pip) { };
+  setuppy = <nixpkgs/pkgs/development/python-modules/generic/run_setup.py>;
+  bootstrapped-pip = callPackage (<nixpkgs/pkgs/development/python-modules/bootstrapped-pip>) { };
 in
 attrs:
 attrs // {
-  # propagatedBuildInputs = lib.lists.unique (attrs.propagatedBuildInputs ++ [ python # setuptools
-  #  ]);
-
   buildInputs = [ wrapPython bootstrapped-pip python setuptools
                   (ensureNewerSourcesHook { year = "1980"; })]
                 ++ attrs.buildInputs or [];
