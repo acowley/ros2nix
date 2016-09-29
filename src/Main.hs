@@ -24,15 +24,9 @@ import System.IO.Temp (withSystemTempDirectory)
 import System.Process (callProcess, readCreateProcessWithExitCode, proc)
 import Text.XML.HXT.Core
 
-testFile :: FilePath
-testFile = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/src/actionlib/package.xml"
-
-testDistro :: FilePath
-testDistro = "/Users/acowley/Documents/Projects/Nix/Ros/indigo_perception_ws/indigo_perception_ws.rosinstall"
-
--- nix-shell tests:
--- cabal run -- /nix/store/v4wjb20r1qysw9n4hdxisbkh0mgws7y3-ros-indigo-perception-src/indigo_perception.rosinstall -o indigo_perception.nix
--- cabal run -- /nix/store/1mbl3dsw159llkry7q3p4030mk67aqv3-ros-indigo-ros_core-src/indigo_ros_core.rosinstall -o indigo_core.nix
+-- Example usage:
+-- stack exec -- ros2nix $(nix-store -r $(nix-instantiate ../Nix/Ros/default.nix -A indigo.ros_core-src))/indigo_ros_core.rosinstall -o indigo_core.nix
+-- stack exec ros2nix -- $(nix-build --no-out-link ../RosNix/default.nix -A kinetic.perception-src)/kinetic_perception.rosinstall -o kinetic_perception.nix
 
 data RosPackage = RosPackage { _localName :: Text
                              , _uri       :: Text
@@ -122,10 +116,10 @@ nixify pkg = mkFunction args body
                            , Antiquoted (mkSym "pyEnv.python.passthru.interpreter")
                            , Plain "|' ./cmake/templates/_setup_util.py.in\n"
                            , Plain "sed -i 's/PYTHON_EXECUTABLE/SHELL/' ./cmake/catkin_package_xml.cmake\n"
-                           , Plain "sed -i 's|#!/usr/bin/env bash|"
+                           , Plain "sed -i 's|#!/usr/bin/env bash|#!"
                            , Antiquoted (mkSym "stdenv.shell")
                            , Plain "|' ./cmake/templates/setup.bash.in\n"
-                           , Plain "sed -i 's|#!/usr/bin/env sh|"
+                           , Plain "sed -i 's|#!/usr/bin/env sh|#!"
                            , Antiquoted (mkSym "stdenv.shell")
                            , Plain "|' ./cmake/templates/setup.sh.in\n"
                            ]]
@@ -282,9 +276,10 @@ letPackageSet pkgs =
                                             [ "ensureNewerSourcesHook", "stdenv"
                                             , "fetchurl", "makeWrapper", "unzip"])
                              , nixKeyVal "callPackage" (mkSym "pyCallPackage")])
-        pyBuild = mkApp2 (mkSym "pyCallPackage")
-                         (mkPath False "./python-install.nix")
-                         (mkNonRecSet [])
+        pyBuild = mkSym "pyPackages.buildPythonPackage"
+        -- pyBuild = mkApp2 (mkSym "pyCallPackage")
+        --                  (mkPath False "./python-install.nix")
+        --                  (mkNonRecSet [])
         rosShellHook = mkFunction
                          (FormalName "pkg")
                          (mkIndented
@@ -331,10 +326,11 @@ letPackageSet pkgs =
 -- | Return the list of dependencies that are not among the packages
 -- being defined.
 externalDeps :: [Package] -> [Text]
-externalDeps pkgs = S.toList . S.fromList . mapMaybe rosDep2Nix . S.toList
+externalDeps pkgs = nub' . mapMaybe rosDep2Nix . S.toList
                   $ S.difference allDeps internalPackages
   where internalPackages = S.fromList $ map (view localName) pkgs
         allDeps = S.fromList $ foldMap deps pkgs
+        nub' = S.toList . S.fromList
 
 rosPyEnv :: NExpr
 rosPyEnv = mkApp (mkSym "python27.buildEnv.override")
@@ -353,15 +349,21 @@ rosPyPackages =
                   (mkPath False "./ros-python-packages.nix")
                   (mkNonRecSet [
                      Inherit Nothing [[StaticKey "fetchurl"]]
-                   , Inherit (Just (mkSym "pyPackages")) $
-                             map (pure . StaticKey)
-                                 [ "buildPythonPackage"
-                                 , "setuptools"
-                                 , "pyyaml"
-                                 , "dateutil"
-                                 , "argparse"
-                                 , "docutils"
-                                 , "nose" ]]))
+                   , -- Inherit (Just (mkSym "pyPackages")) $
+                     --         map (pure . StaticKey)
+                     --             [ "buildPythonPackage"
+                     --             , "setuptools"
+                     --             , "pyyaml"
+                     --             , "dateutil"
+                     --             , "argparse"
+                     --             , "docutils"
+                     --             , "nose" ]
+                     Inherit (Just (mkSym "pyPackages")) [[StaticKey "buildPythonPackage"]]
+                  ,  nixKeyVal "extradeps"
+                               (mkNonRecSet
+                                  [Inherit (Just (mkSym "pyPackages"))
+                                           [[StaticKey "setuptools"]]])
+                   ]))
 
 rosHelperPackages :: NExpr
 rosHelperPackages = mkRecSet [

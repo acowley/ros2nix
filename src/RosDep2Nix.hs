@@ -9,9 +9,9 @@ import Prelude hiding (lookup)
 rosPyDeps :: [Text]
 rosPyDeps = [ "numpy", "setuptools", "sphinx", "six", "dateutil", "docutils"
             , "argparse", "pyyaml", "nose", "rosdep", "rosinstall-generator"
-            , "wstool", "rosinstall", "catkin-tools", "catkin-pkg", "bloom"
+            , "wstool", "rosinstall", "catkin_tools", "catkin_pkg", "bloom"
             , "empy", "matplotlib", "pillow", "pydot", "paramiko", "coverage"
-            , "netifaces", "mock", "psutil", "pyqt4", "pyside"
+            , "netifaces", "mock", "psutil", "pyqt4", "pyside", "defusedxml"
             , "(pygraphviz.override { doCheck = false; })"
             , "(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })"]
 
@@ -28,11 +28,17 @@ renamings = aliases <> fromEnv <> notUsed
                   , ("libpcl-all-dev", "pcl")
                   , ("libpoco-dev", "poco")
                   , ("libvtk-java", "vtkWithQt4")
+                  , ("libpng12-dev", "libpng12")
+                  , ("libtiff-dev", "libtiff")
+                  , ("libv4l-dev", "libv4l")
+                  , ("libvtk-qt", "vtkWithQt4")
+                  , ("protobuf-dev", "protobuf")
                   , ("yaml-cpp", "libyamlcpp") ]
-        
+
         -- Handled by the pyEnv used for ROS builds
         fromEnv = fromList $ map (,"")
                   [ "python-catkin-pkg"
+                  , "python-defusedxml"
                   , "python-empy"
                   , "python-netifaces"
                   , "python-numpy"

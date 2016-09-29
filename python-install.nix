@@ -3,7 +3,8 @@
 { python, setuptools
 , wrapPython, callPackage, lib, ensureNewerSourcesHook }:
 let
-  setuppy = <nixpkgs/pkgs/development/python-modules/generic/run_setup.py>;
+  # setuppy = <nixpkgs/pkgs/development/python-modules/generic/run_setup.py>;
+  setuppy = <nixpkgs/pkgs/development/interpreters/python/run_setup.py>;
   bootstrapped-pip = callPackage (<nixpkgs/pkgs/development/python-modules/bootstrapped-pip>) { };
 in
 attrs:
@@ -41,7 +42,7 @@ attrs // {
     wrapPythonPrograms
     find $out -name "*.in" -exec chmod u+x {} +
   '' + attrs.postFixup or "";
-  
+
   shellHook = attrs.shellHook or ''
     if test -e setup.py; then
        tmp_path=$(mktemp -d)

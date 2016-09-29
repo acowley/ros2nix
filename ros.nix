@@ -8,11 +8,13 @@ let localPackages = rec {
       urdfdom = callPackage ./urdfdom.nix { inherit urdfdom-headers console-bridge; };
     };
 # in callPackage ./indigo_perception.nix {
-in callPackage ./indigo_core.nix {
-    inherit (nixpkgs) boost;
-    # uuid = null;
+# in callPackage ./indigo_core.nix {
+in callPackage ./kinetic_perception.nix {
+    inherit (nixpkgs) boost opencv3;
+# libpng12-dev libtiff-dev libv4l-dev libvtk-qt protobuf-dev python-defusedxml;
+    uuid = null;
     inherit (localPackages) console-bridge;
-    # inherit (localPackage) poco;
+    inherit (localPackages) poco;
     inherit (darwin) libobjc;
     inherit (darwin.apple_sdk.frameworks) Cocoa;
    }

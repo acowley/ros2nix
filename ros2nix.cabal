@@ -1,29 +1,29 @@
 name:                ros2nix
 version:             0.1.0.0
 synopsis:            Build Nix definitions of a ROS distribution
--- description:         
+-- description:
 license:             BSD3
 license-file:        LICENSE
 author:              Anthony Cowley
 maintainer:          acowley@gmail.com
--- copyright:           
+-- copyright:
 category:            System
 build-type:          Simple
--- extra-source-files:  
+-- extra-source-files:
 cabal-version:       >=1.10
 
 executable ros2nix
   main-is:             Main.hs
   other-modules:       NixHelpers, RosDep2Nix
-  -- other-extensions:    
-  build-depends:       base >=4.8 && <4.9,
+  -- other-extensions:
+  build-depends:       base >=4.8 && <4.10,
                        containers,
                        data-fix >= 0.0.3 && < 0.1,
                        directory,
                        filepath,
                        hnix >= 0.2 && < 0.3,
                        hxt >= 9.3 && < 9.4,
-                       lens >= 4.13 && < 4.14,
+                       lens >= 4.13 && < 4.15,
                        logging >= 3.0 && < 3.1,
                        optparse-applicative >= 0.12 && < 0.13,
                        process,
