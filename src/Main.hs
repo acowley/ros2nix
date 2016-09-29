@@ -308,6 +308,9 @@ letPackageSet pkgs =
                             , Antiquoted (mkSym "eigen") ]
                           , [ Plain "-DEIGEN3_INCLUDE_DIR="
                             , Antiquoted (mkSym "eigen")
+                            , Plain "/include/eigen3" ]
+                          , [ Plain "-DEigen3_INCLUDE_DIRS="
+                            , Antiquoted (mkSym "eigen")
                             , Plain "/include/eigen3" ] ]
                      else [])
         pkgSetName = mkSym "rosPackageSet"
