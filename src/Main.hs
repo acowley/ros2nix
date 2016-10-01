@@ -276,7 +276,7 @@ letPackageSet pkgs =
                       , "  if [ \"$(head -1 \"$f\" | head -c+2)\" != '#!' ]; then"
                       , "    # missing shebang => not a script"
                       , "    continue"
-                      , "  fi\n"
+                      , "  fi"
                       , "  sed -i 's|#!\\(/nix/store/.*/python\\)|#!/usr/bin/env \\1|' \"$f\""
                       , "done" ]
         -- , nixKeyVal "preBuild" prepEnv
@@ -409,14 +409,18 @@ rosPyPackages =
 
 -- | Generate a Nix derivation that depends on all given packages.
 mkMetaPackage :: [Package] -> NExpr
-mkMetaPackage pkgs = mkFunction args body
+mkMetaPackage pkgs = mkFunction args body'
   where args = mkFormalSet $
                zip ("stdenv" : "python27" : "python27Packages" : "fetchurl"
                     : "glib" : "pango" : "gdk_pixbuf" : "atk" : "makeWrapper"
                     : "unzip" : "ensureNewerSourcesHook" : "libobjc" : "Cocoa"
                     : "cmake" : "opencv3" : externalDeps pkgs)
                    (repeat Nothing)
-        body = letPackageSet pkgs . mkApp (mkSym "stdenv.mkDerivation") $
+        body' = letPackageSet pkgs $
+                 mkIf (mkSym "(import <nixpkgs> {}).lib.inNixShell")
+                      body
+                      (mkSym "rosPackageSet")
+        body = mkApp (mkSym "stdenv.mkDerivation") $
                mkNonRecSet
                  [ nixKeyVal "name" (mkStr' "rosPackages")
                  , nixKeyVal "buildInputs" deps'
@@ -431,6 +435,22 @@ mkMetaPackage pkgs = mkFunction args body
                                       (mkSym "builtins.isAttrs")
                                       (mkApp (mkSym "stdenv.lib.attrValues")
                                              (mkSym "rosPackageSet"))))
+                   , Plain "\n"
+                   , Plain "export PYTHONPATH="
+                   , Antiquoted (mkApp3
+                                  (mkSym "stdenv.lib.concatMapStringsSep")
+                                  (mkStr' ":")
+                                  (mkFunction
+                                     (FormalName "d")
+                                     (mkOper2 NPlus
+                                      (mkSym "d")
+                                      (mkStr' "/lib/python2.7/site-packages")))
+                                  (mkApp2
+                                     (mkSym "stdenv.lib.filter")
+                                     (mkSym "builtins.isAttrs")
+                                     (mkApp
+                                        (mkSym "stdenv.lib.attrValues")
+                                        (mkSym "rosPackageSet"))))
                    , Plain "\n"
                    , Antiquoted (mkApp3 (mkSym "stdenv.lib.concatMapStringsSep")
                                         (mkStr' "\n")

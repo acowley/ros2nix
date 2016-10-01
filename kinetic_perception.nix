@@ -34,21 +34,11 @@ let
       sed -i 's|#!\(/nix/store/.*/python\)|#!/usr/bin/env \1|' "''$f"
     done
   '';
-    # if [ -f "$out"/.rosinstall ]; then
-    #   mkdir -p $out/ros-support
-    #   mv $out/.rosinstall $out/ros-support
-    # fi
-
   rosShellHook = pkg: ''
     if [ -d "${pkg}/env-hooks" ]; then
       for i in ''$(find "${pkg}/env-hooks" -name "*.sh"); do
         source "''$i"
       done
-    fi
-  '';
-  rosPackagePythonPath = pkg: ''
-    if [ -d "${pkg}/lib/python2.7/site-packages" ]; then
-      export PYTHONPATH="${pkg}/lib/python2.7/site-packages":"$PYTHONPATH"
     fi
   '';
   pyCallPackage = stdenv.lib.callPackageWith {
@@ -2848,26 +2838,20 @@ let
       postFixup;
     }) {};
   };
-in if (import <nixpkgs> {}).lib.inNixShell
-   then stdenv.mkDerivation {
-    name = "rosPackages";
-    buildInputs = [
-      cmake
-      pkgconfig
-      glib
-     ] ++ stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet);
-    src = [];
-    shellHook = ''
-      export ROS_PACKAGE_PATH=${with stdenv.lib; with builtins;
-      concatStringsSep ":" (filter isAttrs (attrValues rosPackageSet))}
-      export PYTHONPATH=${with stdenv.lib; with builtins;
-      concatStringsSep ":" (map (d: d + "/lib/python2.7/site-packages")
-                                (filter isAttrs
-                                        (attrValues rosPackageSet)))}
-      ${with stdenv.lib; with builtins;
-        concatMapStringsSep "\n"
-          rosShellHook
-          (filter isAttrs (attrValues rosPackageSet))}
-    '';
-  }
-  else rosPackageSet
+  in if (import <nixpkgs> {}).lib.inNixShell
+    then stdenv.mkDerivation {
+      name = "rosPackages";
+      buildInputs = [
+        cmake
+        pkgconfig
+        glib
+      ] ++ stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet);
+      src = [];
+      shellHook = ''
+        export ROS_PACKAGE_PATH=${stdenv.lib.concatStringsSep ":" (stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet))}
+        export PYTHONPATH=${stdenv.lib.concatMapStringsSep ":" (d:
+        d + "/lib/python2.7/site-packages") (stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet))}
+        ${stdenv.lib.concatMapStringsSep "\n" rosShellHook (stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet))}
+      '';
+    }
+    else rosPackageSet
