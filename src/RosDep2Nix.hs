@@ -7,13 +7,13 @@ import qualified Data.Text as T
 import Prelude hiding (lookup)
 
 rosPyDeps :: [Text]
-rosPyDeps = [ "numpy", "setuptools", "sphinx", "six", "dateutil", "docutils"
-            , "argparse", "pyyaml", "nose", "rosdep", "rosinstall-generator"
-            , "wstool", "rosinstall", "catkin_tools", "catkin_pkg", "bloom"
-            , "empy", "matplotlib", "pillow", "pydot", "paramiko", "coverage"
-            , "netifaces", "mock", "psutil", "pyqt4", "pyside", "defusedxml"
-            , "(pygraphviz.override { doCheck = false; })"
-            , "(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })"]
+rosPyDeps = [ "numpy", "setuptools", "sphinx", "#six", "dateutil", "docutils"
+            , "argparse", "pyyaml", "nose", "rosdep", "rospkg"
+            , "rosinstall-generator", "wstool", "rosinstall", "catkin_tools"
+            , "catkin_pkg", "bloom", "empy", "matplotlib", "pillow", "pydot"
+            , "paramiko", "coverage", "netifaces", "mock", "psutil", "pyqt4"
+            , "#pyside", "defusedxml", "(pygraphviz.override { doCheck = false; })"
+            , "#(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })"]
 
 -- | Mapping of catkin system dependency names to the corresponding
 -- nixpkgs value. Note that Python dependencies are removed as they

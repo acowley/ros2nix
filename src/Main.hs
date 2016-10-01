@@ -75,14 +75,22 @@ nixify pkg = mkFunction args body
                , nixKeyVal "src" (fetchSrc pkg)
                , nixKeyVal "propagatedBuildInputs"
                            (extraInputs . mkList $ map mkSym deps')
-               , Inherit Nothing (map (pure . StaticKey) ["cmakeFlags", "postInstall"]) ]
+               , Inherit Nothing (map (pure . StaticKey) ["cmakeFlags", "postInstall", "postFixup"]) ]
                ++ pkgFixes
         deps' = "cmake" : "pkgconfig" : "gtest" : "pyEnv"
               : mapMaybe rosDep2Nix (deps pkg) ++ extraDeps
         pclDarwinDeps = ["libobjc", "Cocoa"]
+        pclRosDeps = ["dynamic_reconfigure"
+                     ,"eigen"
+                     ,"nodelet"
+                     ,"nodelet_topic_tools"
+                     ,"pcl_conversions"
+                     ,"pcl"
+                     ,"tf"
+                     ,"tf2_eigen"]
         extraDeps = case view localName pkg of
                        "image_view" -> ["glib", "pango"]
-                       "pcl_ros" -> pclDarwinDeps
+                       "pcl_ros" -> pclDarwinDeps ++ pclRosDeps
                        _ -> []
         extraInputs = case view localName pkg of
                         "image_view" ->
@@ -97,10 +105,12 @@ nixify pkg = mkFunction args body
                           in aux
                         "pcl_ros" ->
                           let aux (Fix (NList ds)) =
-                                mkOper2 NConcat
-                                        (mkList (filter (not . (`elem` pclDarwinDeps)
-                                                         . T.pack . show . prettyNix)
-                                                        ds))
+                                mkOper2
+                                  NConcat
+                                  (mkList (filter (not . (`elem` pclDarwinDeps)
+                                                   . T.pack . show . prettyNix)
+                                                  ds
+                                           ++ map mkSym pclRosDeps))
                                         (mkApp2 (mkSym "stdenv.lib.optionals")
                                                 (mkSym "stdenv.isDarwin")
                                                 (mkList $ map mkSym pclDarwinDeps))
@@ -135,6 +145,12 @@ nixify pkg = mkFunction args body
             "gencpp" ->
               [ nixKeyVal "patchPhase" $ mkStr Indented
                 "sed -i 's/${PYTHON_EXECUTABLE} //' ./cmake/gencpp-extras.cmake.em" ]
+            "pcl_ros" ->
+              [ nixKeyVal "preConfigure" $ mkStr Indented
+                "sed -i 's/find_package(Eigen3 REQUIRED)//' ./CMakeLists.txt" ]
+            "geneus" ->
+              [ nixKeyVal "preConfigure" $ mkStr Indented
+                "sed -i 's/COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE}/COMMAND ${CATKIN_ENV}/' ./cmake/geneus-extras.cmake.em" ]
             "image_view" ->
               [ nixKeyVal "NIX_CFLAGS_COMPILE"
                 $ mkDoubleQ [
@@ -180,8 +196,8 @@ firstM f = go
 data PackageError = NoPackageXML | NotGzip deriving (Eq,Show)
 
 -- | Information gleaned from package contents.
-data PackageInfo = PackageInfo { packageDeps      :: [Text]
-                               , packageBuildType :: BuildType }
+data PackageInfo = PackageInfo { _packageDeps      :: [Text]
+                               , _packageBuildType :: BuildType }
 
 -- | Parse a @package.xml@ file contained within a ROS package's
 -- source tarball returning a list of dependencies.
@@ -255,6 +271,14 @@ letPackageSet pkgs =
                       , "  cp -r env-hooks $out"
                       , "fi"
                       , "popd" ]
+        , nixKeyVal "postFixup" . mkStr Indented
+          $ T.unlines [ "find \"$prefix\" -type f -perm -0100 | while read f; do"
+                      , "  if [ \"$(head -1 \"$f\" | head -c+2)\" != '#!' ]; then"
+                      , "    # missing shebang => not a script"
+                      , "    continue"
+                      , "  fi\n"
+                      , "  sed -i 's|#!\\(/nix/store/.*/python\\)|#!/usr/bin/env \\1|' \"$f\""
+                      , "done" ]
         -- , nixKeyVal "preBuild" prepEnv
         , nixKeyVal "rosShellHook" rosShellHook
         , nixKeyVal "pyCallPackage" pyCallPkg
@@ -276,10 +300,10 @@ letPackageSet pkgs =
                                             [ "ensureNewerSourcesHook", "stdenv"
                                             , "fetchurl", "makeWrapper", "unzip"])
                              , nixKeyVal "callPackage" (mkSym "pyCallPackage")])
-        pyBuild = mkSym "pyPackages.buildPythonPackage"
-        -- pyBuild = mkApp2 (mkSym "pyCallPackage")
-        --                  (mkPath False "./python-install.nix")
-        --                  (mkNonRecSet [])
+        -- pyBuild = mkSym "pyPackages.buildPythonPackage"
+        pyBuild = mkApp2 (mkSym "pyCallPackage")
+                         (mkPath False "./python-install.nix")
+                         (mkNonRecSet [])
         rosShellHook = mkFunction
                          (FormalName "pkg")
                          (mkIndented
@@ -368,20 +392,20 @@ rosPyPackages =
                                            [[StaticKey "setuptools"]]])
                    ]))
 
-rosHelperPackages :: NExpr
-rosHelperPackages = mkRecSet [
-    call "sip" [ Inherit (Just (mkSym "pyPackages"))
-                               [[StaticKey "buildPythonPackage"]]]
-  , call "console-bridge" []
-  , call "poco" []
-  , call "collada-dom" []
-  , call "urdfdom-headers" []
-  , call "urdfdom" [ Inherit Nothing [ [StaticKey "urdfdom-headers"]
-                                     , [StaticKey "console-bridge"] ]]]
-  where call n = nixKeyVal n
-               . mkApp2 (mkSym "callPackage")
-                        (mkPath False ("./"<>T.unpack n<>".nix"))
-               . mkNonRecSet
+-- rosHelperPackages :: NExpr
+-- rosHelperPackages = mkRecSet [
+--     call "sip" [ Inherit (Just (mkSym "pyPackages"))
+--                                [[StaticKey "buildPythonPackage"]]]
+--   , call "console-bridge" []
+--   , call "poco" []
+--   , call "collada-dom" []
+--   , call "urdfdom-headers" []
+--   , call "urdfdom" [ Inherit Nothing [ [StaticKey "urdfdom-headers"]
+--                                      , [StaticKey "console-bridge"] ]]]
+--   where call n = nixKeyVal n
+--                . mkApp2 (mkSym "callPackage")
+--                         (mkPath False ("./"<>T.unpack n<>".nix"))
+--                . mkNonRecSet
 
 -- | Generate a Nix derivation that depends on all given packages.
 mkMetaPackage :: [Package] -> NExpr
@@ -390,7 +414,7 @@ mkMetaPackage pkgs = mkFunction args body
                zip ("stdenv" : "python27" : "python27Packages" : "fetchurl"
                     : "glib" : "pango" : "gdk_pixbuf" : "atk" : "makeWrapper"
                     : "unzip" : "ensureNewerSourcesHook" : "libobjc" : "Cocoa"
-                    : "cmake" : externalDeps pkgs)
+                    : "cmake" : "opencv3" : externalDeps pkgs)
                    (repeat Nothing)
         body = letPackageSet pkgs . mkApp (mkSym "stdenv.mkDerivation") $
                mkNonRecSet
@@ -447,7 +471,8 @@ main = withStdoutLogging $
           setLogLevel LevelError
           if fexists
           then do pkgs <- getPackages f >>= mapM (prefetch cache)
-                  let nix = show . prettyNix $ mkMetaPackage pkgs
+                  let pkgs' = filter (\p -> p^.localName /= "opencv3") pkgs
+                      nix = show . prettyNix $ mkMetaPackage pkgs'
                   maybe print writeFile out nix
           else putStrLn $ "Couldn't find .rosinstall file: " ++ f
 

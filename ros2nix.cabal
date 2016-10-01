@@ -14,7 +14,7 @@ cabal-version:       >=1.10
 
 executable ros2nix
   main-is:             Main.hs
-  other-modules:       NixHelpers, RosDep2Nix
+  other-modules:       NixHelpers, RosDep2Nix, HashCache
   -- other-extensions:
   build-depends:       base >=4.8 && <4.10,
                        containers,

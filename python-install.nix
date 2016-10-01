@@ -24,16 +24,19 @@ attrs // {
     popd
   '' + attrs.preBuild or "";
 
-  installPhase = ''
-    runHook preInstall
+  # installPhase = ''
+  #   runHook preInstall
+  postInstall = ''
     mkdir -p "$out/${python.sitePackages}"
 
     pushd ../dist
-    export PYTHONPATH="$out/${python.sitePackages}:$PYTHONPATH"
+    if ! echo "$PYTHONPATH" | grep -q "$out" ; then
+      export PYTHONPATH="$out/${python.sitePackages}:$PYTHONPATH"
+    fi
     ${bootstrapped-pip}/bin/pip install *.whl --no-index --prefix=$out --no-cache
     popd
-    make install
-    runHook postInstall
+    # make install
+    # runHook postInstall
   '' + attrs.installPhase or "";
 
     # ${python.interpreter} ${<nixpkgs> + /pkgs/development/python-modules/generic/catch_conflicts.py}

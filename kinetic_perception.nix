@@ -1,4 +1,4 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, ensureNewerSourcesHook, fetchurl, ffmpeg, gdk_pixbuf, glib, graphviz, gtest, gtk2, jasper, libjpeg, libobjc, libogg, libpng12, libtheora, libtiff, libv4l, libyamlcpp, log4cxx, lz4, makeWrapper, pango, pcl, pkgconfig, poco, protobuf, python27, python27Packages, sbcl, stdenv, tinyxml, unzip, uuid, vtkWithQt4, zlib, opencv3 }:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, ensureNewerSourcesHook, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, makeWrapper, opencv3, pango, pcl, pkgconfig, poco, python27, python27Packages, sbcl, stdenv, tinyxml, unzip, uuid }:
 let
   callPackage = stdenv.lib.callPackageWith rosPackageSet;
   SHLIB = if stdenv.isDarwin
@@ -25,11 +25,30 @@ let
     fi
     popd
   '';
+  postFixup = ''
+    find "''$prefix" -type f -perm -0100 | while read f; do
+      if [ "''$(head -1 "''$f" | head -c+2)" != '#!' ]; then
+        # missing shebang => not a script
+        continue
+      fi
+      sed -i 's|#!\(/nix/store/.*/python\)|#!/usr/bin/env \1|' "''$f"
+    done
+  '';
+    # if [ -f "$out"/.rosinstall ]; then
+    #   mkdir -p $out/ros-support
+    #   mv $out/.rosinstall $out/ros-support
+    # fi
+
   rosShellHook = pkg: ''
     if [ -d "${pkg}/env-hooks" ]; then
       for i in ''$(find "${pkg}/env-hooks" -name "*.sh"); do
         source "''$i"
       done
+    fi
+  '';
+  rosPackagePythonPath = pkg: ''
+    if [ -d "${pkg}/lib/python2.7/site-packages" ]; then
+      export PYTHONPATH="${pkg}/lib/python2.7/site-packages":"$PYTHONPATH"
     fi
   '';
   pyCallPackage = stdenv.lib.callPackageWith {
@@ -57,14 +76,14 @@ let
       numpy
       setuptools
       sphinx
-      # six
+      #six
       dateutil
       docutils
       argparse
       pyyaml
       nose
-      rospkg
       rosdep
+      rospkg
       rosinstall-generator
       wstool
       rosinstall
@@ -81,22 +100,20 @@ let
       mock
       psutil
       pyqt4
-      # pyside
+      #pyside
       defusedxml
       (pygraphviz.override { doCheck = false; })
-      # (callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })
+      #(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })
     ];
   };
   rosPackageSet = {
     inherit stdenv pyEnv glib pango
     cmake libobjc Cocoa apr boost
     bzip2 console-bridge eigen
-    ffmpeg graphviz gtest gtk2
-    jasper libjpeg libogg libpng12
-    libtheora libtiff
-    libyamlcpp log4cxx lz4 pcl
-    pkgconfig poco protobuf sbcl
-    tinyxml uuid vtkWithQt4 zlib opencv3;
+    graphviz gtest gtk2 libogg
+    libtheora libyamlcpp log4cxx lz4
+    opencv3 pcl pkgconfig poco sbcl
+    tinyxml uuid;
     inherit (pyPackages) buildPythonPackage;
     actionlib = callPackage ({ actionlib_msgs, boost, catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, rospy, rostest, std_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -121,7 +138,8 @@ let
         rostest
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     angles = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -138,7 +156,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     bond = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -158,7 +177,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     bond_core = callPackage ({ bond, bondcpp, bondpy, catkin, cmake, gtest, pkgconfig, pyEnv, smclib, stdenv }:
     stdenv.mkDerivation {
@@ -179,7 +199,8 @@ let
         catkin
         smclib
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     bondcpp = callPackage ({ bond, boost, catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, roscpp, smclib, stdenv, uuid }:
     stdenv.mkDerivation {
@@ -202,7 +223,8 @@ let
         smclib
         uuid
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     bondpy = callPackage ({ bond, catkin, cmake, gtest, pkgconfig, pyEnv, rospy, smclib, stdenv, uuid }:
     stdenv.mkDerivation (pyBuild {
@@ -223,7 +245,8 @@ let
         smclib
         uuid
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     smclib = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -240,7 +263,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     catkin = callPackage ({ cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -256,7 +280,8 @@ let
         gtest
         pyEnv
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       patchPhase = ''
         sed -i 's|#!@PYTHON_EXECUTABLE@|#!${pyEnv.python.passthru.interpreter}|' ./cmake/templates/_setup_util.py.in
         sed -i 's/PYTHON_EXECUTABLE/SHELL/' ./cmake/catkin_package_xml.cmake
@@ -283,7 +308,8 @@ let
         console-bridge
         poco
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     cmake_modules = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -300,7 +326,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     actionlib_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -320,7 +347,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     common_msgs = callPackage ({ actionlib_msgs, catkin, cmake, diagnostic_msgs, geometry_msgs, gtest, nav_msgs, pkgconfig, pyEnv, sensor_msgs, shape_msgs, stdenv, stereo_msgs, trajectory_msgs, visualization_msgs }:
     stdenv.mkDerivation {
@@ -346,7 +374,8 @@ let
         trajectory_msgs
         visualization_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     diagnostic_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -366,7 +395,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     geometry_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -386,7 +416,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     nav_msgs = callPackage ({ actionlib_msgs, catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -408,7 +439,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     sensor_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -429,7 +461,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     shape_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -450,7 +483,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     stereo_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, sensor_msgs, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -471,7 +505,8 @@ let
         sensor_msgs
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     trajectory_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosbag_migration_rule, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -493,7 +528,8 @@ let
         rosbag_migration_rule
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     visualization_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -514,7 +550,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     dynamic_reconfigure = callPackage ({ boost, catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, roscpp_serialization, roslib, rospy, rosservice, rostest, std_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -541,7 +578,8 @@ let
         rostest
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     filters = callPackage ({ catkin, cmake, gtest, pkgconfig, pluginlib, pyEnv, rosconsole, roscpp, roslib, rostest, stdenv }:
     stdenv.mkDerivation {
@@ -563,7 +601,8 @@ let
         roslib
         rostest
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     gencpp = callPackage ({ catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -581,7 +620,8 @@ let
         catkin
         genmsg
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       patchPhase = ''
         sed -i 's/''${PYTHON_EXECUTABLE} //' ./cmake/gencpp-extras.cmake.em
       '';
@@ -602,7 +642,8 @@ let
         catkin
         genmsg
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       preConfigure = ''
         sed -i 's/COMMAND ''${CATKIN_ENV} ''${PYTHON_EXECUTABLE}/COMMAND ''${CATKIN_ENV}/' ./cmake/geneus-extras.cmake.em
       '';
@@ -623,7 +664,8 @@ let
         catkin
         genmsg
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       patchPhase = ''
         sed -i 's/''${PYTHON_EXECUTABLE} //' ./cmake/genlisp-extras.cmake.em
       '';
@@ -643,7 +685,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       patchPhase = ''
         sed -i 's/''${PYTHON_EXECUTABLE} ''${GENMSG_CHECK_DEPS_SCRIPT}/''${GENMSG_CHECK_DEPS_SCRIPT}/' ./cmake/pkg-genmsg.cmake.em
       '';
@@ -664,7 +707,8 @@ let
         catkin
         genmsg
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     genpy = callPackage ({ catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -682,7 +726,8 @@ let
         catkin
         genmsg
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       patchPhase = ''
         sed -i 's/''${PYTHON_EXECUTABLE} //' ./cmake/genpy-extras.cmake.em
       '';
@@ -707,7 +752,8 @@ let
         orocos_kdl
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     tf = callPackage ({ angles, catkin, cmake, geometry_msgs, graphviz, gtest, message_filters, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp, rostest, roswtf, sensor_msgs, std_msgs, stdenv, tf2, tf2_ros }:
     stdenv.mkDerivation (pyBuild {
@@ -738,7 +784,8 @@ let
         tf2
         tf2_ros
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     tf2 = callPackage ({ catkin, cmake, console-bridge, geometry_msgs, gtest, pkgconfig, pyEnv, rostime, stdenv, tf2_msgs }:
     stdenv.mkDerivation {
@@ -759,7 +806,8 @@ let
         rostime
         tf2_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     tf2_eigen = callPackage ({ catkin, cmake, cmake_modules, eigen, geometry_msgs, gtest, pkgconfig, pyEnv, stdenv, tf2 }:
     stdenv.mkDerivation {
@@ -780,7 +828,8 @@ let
         geometry_msgs
         tf2
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     tf2_geometry_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, orocos_kdl, pkgconfig, pyEnv, python_orocos_kdl, stdenv, tf2, tf2_ros }:
     stdenv.mkDerivation (pyBuild {
@@ -802,7 +851,8 @@ let
         tf2
         tf2_ros
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     tf2_msgs = callPackage ({ actionlib_msgs, catkin, cmake, geometry_msgs, gtest, message_generation, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -822,7 +872,8 @@ let
         geometry_msgs
         message_generation
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     tf2_py = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rospy, stdenv, tf2 }:
     stdenv.mkDerivation (pyBuild {
@@ -841,7 +892,8 @@ let
         rospy
         tf2
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     tf2_ros = callPackage ({ actionlib, actionlib_msgs, catkin, cmake, geometry_msgs, gtest, message_filters, pkgconfig, pyEnv, roscpp, rosgraph, rospy, std_msgs, stdenv, tf2, tf2_msgs, tf2_py }:
     stdenv.mkDerivation (pyBuild {
@@ -869,7 +921,8 @@ let
         tf2_msgs
         tf2_py
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     camera_calibration_parsers = callPackage ({ boost, catkin, cmake, gtest, libyamlcpp, pkgconfig, pyEnv, rosconsole, roscpp, roscpp_serialization, sensor_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -893,7 +946,8 @@ let
         sensor_msgs
         libyamlcpp
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     camera_info_manager = callPackage ({ boost, camera_calibration_parsers, catkin, cmake, gtest, image_transport, pkgconfig, pyEnv, roscpp, roslib, rostest, sensor_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -917,7 +971,8 @@ let
         rostest
         sensor_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     image_common = callPackage ({ camera_calibration_parsers, camera_info_manager, catkin, cmake, gtest, image_transport, pkgconfig, polled_camera, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -938,7 +993,8 @@ let
         image_transport
         polled_camera
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     image_transport = callPackage ({ catkin, cmake, gtest, message_filters, pkgconfig, pluginlib, pyEnv, rosconsole, roscpp, roslib, sensor_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -961,7 +1017,8 @@ let
         roslib
         sensor_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     polled_camera = callPackage ({ catkin, cmake, gtest, image_transport, message_generation, pkgconfig, pyEnv, rosconsole, roscpp, sensor_msgs, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -984,7 +1041,8 @@ let
         sensor_msgs
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     camera_calibration = callPackage ({ catkin, cmake, cv_bridge, gtest, image_geometry, message_filters, pkgconfig, pyEnv, rospy, sensor_msgs, std_srvs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -1007,7 +1065,8 @@ let
         sensor_msgs
         std_srvs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     depth_image_proc = callPackage ({ boost, catkin, cmake, cmake_modules, cv_bridge, eigen_conversions, gtest, image_geometry, image_transport, message_filters, nodelet, pkgconfig, pyEnv, sensor_msgs, stdenv, stereo_msgs, tf2, tf2_ros }:
     stdenv.mkDerivation {
@@ -1036,7 +1095,8 @@ let
         tf2
         tf2_ros
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     image_pipeline = callPackage ({ camera_calibration, catkin, cmake, depth_image_proc, gtest, image_proc, image_rotate, image_view, pkgconfig, pyEnv, stdenv, stereo_image_proc }:
     stdenv.mkDerivation {
@@ -1059,7 +1119,8 @@ let
         image_view
         stereo_image_proc
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     image_proc = callPackage ({ boost, catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_geometry, image_transport, nodelet, pkgconfig, pyEnv, roscpp, sensor_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -1084,7 +1145,8 @@ let
         roscpp
         sensor_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     image_rotate = callPackage ({ catkin, cmake, cmake_modules, cv_bridge, dynamic_reconfigure, eigen_conversions, geometry_msgs, gtest, image_transport, nodelet, pkgconfig, pyEnv, roscpp, stdenv, tf2, tf2_geometry_msgs, tf2_ros }:
     stdenv.mkDerivation {
@@ -1112,7 +1174,8 @@ let
         tf2_geometry_msgs
         tf2_ros
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     image_view = callPackage ({ camera_calibration_parsers, catkin, cmake, cv_bridge, dynamic_reconfigure, glib, gtest, gtk2, image_transport, message_filters, message_generation, nodelet, pango, pkgconfig, pyEnv, rosconsole, roscpp, sensor_msgs, std_srvs, stdenv, stereo_msgs }:
     stdenv.mkDerivation {
@@ -1149,7 +1212,8 @@ let
         glib.dev
         pango
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       NIX_CFLAGS_COMPILE = "-I${glib.out}/lib/glib-2.0/include -I${gtk2.dev}/include/gtk-2.0 -I${glib.dev}/include/glib-2.0 -I${pango.dev}/include/pango-1.0 -I${gtk2.out}/lib/gtk-2.0/include";
     }) {};
     stereo_image_proc = callPackage ({ catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_geometry, image_proc, image_transport, message_filters, nodelet, pkgconfig, pyEnv, sensor_msgs, stdenv, stereo_msgs }:
@@ -1176,7 +1240,8 @@ let
         sensor_msgs
         stereo_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     compressed_depth_image_transport = callPackage ({ catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_transport, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1196,7 +1261,8 @@ let
         dynamic_reconfigure
         image_transport
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     compressed_image_transport = callPackage ({ catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_transport, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1216,7 +1282,8 @@ let
         dynamic_reconfigure
         image_transport
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     image_transport_plugins = callPackage ({ catkin, cmake, compressed_depth_image_transport, compressed_image_transport, gtest, pkgconfig, pyEnv, stdenv, theora_image_transport }:
     stdenv.mkDerivation {
@@ -1236,7 +1303,8 @@ let
         compressed_image_transport
         theora_image_transport
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     theora_image_transport = callPackage ({ catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_transport, libogg, libtheora, message_generation, message_runtime, pkgconfig, pluginlib, pyEnv, rosbag, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -1263,7 +1331,8 @@ let
         rosbag
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     laser_assembler = callPackage ({ catkin, cmake, filters, gtest, laser_geometry, message_filters, message_generation, message_runtime, pkgconfig, pluginlib, pyEnv, roscpp, rostest, sensor_msgs, stdenv, tf }:
     stdenv.mkDerivation {
@@ -1290,7 +1359,8 @@ let
         sensor_msgs
         tf
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     laser_filters = callPackage ({ angles, catkin, cmake, filters, gtest, laser_geometry, message_filters, pkgconfig, pluginlib, pyEnv, roscpp, rostest, sensor_msgs, stdenv, tf }:
     stdenv.mkDerivation {
@@ -1316,7 +1386,8 @@ let
         sensor_msgs
         tf
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     laser_geometry = callPackage ({ angles, boost, catkin, cmake, cmake_modules, eigen, gtest, pkgconfig, pyEnv, roscpp, sensor_msgs, stdenv, tf }:
     stdenv.mkDerivation (pyBuild {
@@ -1340,7 +1411,8 @@ let
         sensor_msgs
         tf
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     laser_pipeline = callPackage ({ catkin, cmake, gtest, laser_assembler, laser_filters, laser_geometry, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1360,7 +1432,8 @@ let
         laser_filters
         laser_geometry
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     message_generation = callPackage ({ catkin, cmake, gencpp, geneus, genlisp, genmsg, gennodejs, genpy, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1383,7 +1456,8 @@ let
         gennodejs
         genpy
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     message_runtime = callPackage ({ catkin, cmake, cpp_common, genpy, gtest, pkgconfig, pyEnv, roscpp_serialization, roscpp_traits, rostime, stdenv }:
     stdenv.mkDerivation {
@@ -1405,7 +1479,8 @@ let
         roscpp_traits
         rostime
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     perception = callPackage ({ catkin, cmake, gtest, image_common, image_pipeline, image_transport_plugins, laser_pipeline, perception_pcl, pkgconfig, pyEnv, ros_base, stdenv, vision_opencv }:
     stdenv.mkDerivation {
@@ -1429,7 +1504,8 @@ let
         ros_base
         vision_opencv
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     ros_base = callPackage ({ actionlib, bond_core, catkin, class_loader, cmake, dynamic_reconfigure, gtest, nodelet_core, pkgconfig, pluginlib, pyEnv, ros_core, stdenv }:
     stdenv.mkDerivation {
@@ -1453,7 +1529,8 @@ let
         pluginlib
         ros_core
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     ros_core = callPackage ({ catkin, cmake, cmake_modules, common_msgs, gencpp, geneus, genlisp, genmsg, gennodejs, genpy, gtest, message_generation, message_runtime, pkgconfig, pyEnv, ros, ros_comm, rosbag_migration_rule, rosconsole_bridge, roscpp_core, rosgraph_msgs, roslisp, rospack, std_msgs, std_srvs, stdenv }:
     stdenv.mkDerivation {
@@ -1490,7 +1567,8 @@ let
         std_msgs
         std_srvs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     nodelet = callPackage ({ bondcpp, boost, catkin, cmake, cmake_modules, gtest, message_generation, message_runtime, pkgconfig, pluginlib, pyEnv, rosconsole, roscpp, rospy, std_msgs, stdenv, tinyxml, uuid }:
     stdenv.mkDerivation {
@@ -1519,7 +1597,8 @@ let
         tinyxml
         uuid
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     nodelet_core = callPackage ({ catkin, cmake, gtest, nodelet, nodelet_topic_tools, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1538,7 +1617,8 @@ let
         nodelet
         nodelet_topic_tools
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     nodelet_topic_tools = callPackage ({ boost, catkin, cmake, dynamic_reconfigure, gtest, message_filters, nodelet, pkgconfig, pluginlib, pyEnv, roscpp, stdenv }:
     stdenv.mkDerivation {
@@ -1561,7 +1641,8 @@ let
         pluginlib
         roscpp
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     orocos_kdl = callPackage ({ catkin, cmake, eigen, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1580,7 +1661,8 @@ let
         eigen
         pkgconfig
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     python_orocos_kdl = callPackage ({ catkin, cmake, gtest, orocos_kdl, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1598,7 +1680,8 @@ let
         catkin
         orocos_kdl
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     pcl_conversions = callPackage ({ catkin, cmake, cmake_modules, gtest, pcl, pcl_msgs, pkgconfig, pyEnv, roscpp, sensor_msgs, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -1622,7 +1705,8 @@ let
         sensor_msgs
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     pcl_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, sensor_msgs, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -1643,9 +1727,10 @@ let
         sensor_msgs
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
-    pcl_ros = callPackage ({ Cocoa, catkin, cmake, cmake_modules, genmsg, gtest, libobjc, pkgconfig, pyEnv, rosconsole, roslib, stdenv, eigen, pcl, dynamic_reconfigure, nodelet, nodelet_topic_tools, pcl_conversions, tf, tf2_eigen }:
+    pcl_ros = callPackage ({ Cocoa, catkin, cmake, cmake_modules, dynamic_reconfigure, eigen, genmsg, gtest, libobjc, nodelet, nodelet_topic_tools, pcl, pcl_conversions, pkgconfig, pyEnv, rosconsole, roslib, stdenv, tf, tf2_eigen }:
     stdenv.mkDerivation {
       name = "pcl_ros";
       version = "1.4.1-0";
@@ -1655,19 +1740,27 @@ let
       };
       propagatedBuildInputs = [
         cmake
-        dynamic_reconfigure
         pkgconfig
-        eigen
         gtest
         pyEnv
         catkin
         cmake_modules
         genmsg
+        rosconsole
+        roslib
+        dynamic_reconfigure
+        eigen
         nodelet
         nodelet_topic_tools
         pcl_conversions
-        rosconsole
-        roslib
+        pcl
+        tf
+        tf2_eigen
+        dynamic_reconfigure
+        eigen
+        nodelet
+        nodelet_topic_tools
+        pcl_conversions
         pcl
         tf
         tf2_eigen
@@ -1675,7 +1768,8 @@ let
         libobjc
         Cocoa
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
       preConfigure = ''
         sed -i 's/find_package(Eigen3 REQUIRED)//' ./CMakeLists.txt
       '';
@@ -1698,7 +1792,8 @@ let
         pcl_msgs
         pcl_ros
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     pluginlib = callPackage ({ boost, catkin, class_loader, cmake, cmake_modules, gtest, pkgconfig, pyEnv, rosconsole, roslib, stdenv, tinyxml }:
     stdenv.mkDerivation (pyBuild {
@@ -1721,7 +1816,8 @@ let
         roslib
         tinyxml
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     mk = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosbuild, stdenv }:
     stdenv.mkDerivation {
@@ -1739,7 +1835,8 @@ let
         catkin
         rosbuild
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     ros = callPackage ({ catkin, cmake, gtest, mk, pkgconfig, pyEnv, rosbash, rosboost_cfg, rosbuild, rosclean, roscreate, roslang, roslib, rosmake, rosunit, stdenv }:
     stdenv.mkDerivation {
@@ -1766,7 +1863,8 @@ let
         rosmake
         rosunit
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosbash = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1783,7 +1881,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosboost_cfg = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -1800,7 +1899,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosbuild = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1820,7 +1920,8 @@ let
         message_runtime
         pkgconfig
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosclean = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -1837,7 +1938,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     roscreate = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -1854,7 +1956,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     roslang = callPackage ({ catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -1872,7 +1975,8 @@ let
         catkin
         genmsg
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     roslib = callPackage ({ boost, catkin, cmake, gtest, pkgconfig, pyEnv, rospack, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -1891,7 +1995,8 @@ let
         catkin
         rospack
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosmake = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -1908,7 +2013,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosunit = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, roslib, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -1926,7 +2032,8 @@ let
         catkin
         roslib
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     message_filters = callPackage ({ boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosconsole, roscpp, rostest, rosunit, stdenv, xmlrpcpp }:
     stdenv.mkDerivation (pyBuild {
@@ -1949,7 +2056,8 @@ let
         rosunit
         xmlrpcpp
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     ros_comm = callPackage ({ catkin, cmake, gtest, message_filters, pkgconfig, pyEnv, ros, rosbag, rosconsole, roscpp, rosgraph, rosgraph_msgs, roslaunch, roslisp, rosmaster, rosmsg, rosnode, rosout, rosparam, rospy, rosservice, rostest, rostopic, roswtf, std_srvs, stdenv, topic_tools, xmlrpcpp }:
     stdenv.mkDerivation {
@@ -1988,7 +2096,8 @@ let
         topic_tools
         xmlrpcpp
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosbag = callPackage ({ boost, catkin, cmake, cpp_common, genmsg, genpy, gtest, pkgconfig, pyEnv, rosbag_storage, rosconsole, roscpp, roscpp_serialization, roslib, rospy, stdenv, topic_tools, xmlrpcpp }:
     stdenv.mkDerivation (pyBuild {
@@ -2017,7 +2126,8 @@ let
         topic_tools
         xmlrpcpp
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosbag_storage = callPackage ({ boost, bzip2, catkin, cmake, console-bridge, cpp_common, gtest, pkgconfig, pyEnv, roscpp_serialization, roscpp_traits, roslz4, rostime, stdenv }:
     stdenv.mkDerivation {
@@ -2042,7 +2152,8 @@ let
         roslz4
         rostime
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosconsole = callPackage ({ apr, boost, catkin, cmake, cpp_common, gtest, log4cxx, pkgconfig, pyEnv, rosbuild, rostime, rosunit, stdenv }:
     stdenv.mkDerivation {
@@ -2066,7 +2177,8 @@ let
         rostime
         rosunit
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     roscpp = callPackage ({ catkin, cmake, cpp_common, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp_serialization, roscpp_traits, rosgraph_msgs, roslang, rostime, std_msgs, stdenv, xmlrpcpp }:
     stdenv.mkDerivation {
@@ -2095,7 +2207,8 @@ let
         std_msgs
         xmlrpcpp
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosgraph = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2112,7 +2225,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     roslaunch = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosclean, rosgraph_msgs, roslib, rosmaster, rosout, rosparam, rosunit, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2136,7 +2250,8 @@ let
         rosparam
         rosunit
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     roslz4 = callPackage ({ catkin, cmake, gtest, lz4, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2154,7 +2269,8 @@ let
         catkin
         lz4
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosmaster = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2172,7 +2288,8 @@ let
         catkin
         rosgraph
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosmsg = callPackage ({ catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, rosbag, roslib, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2192,7 +2309,8 @@ let
         rosbag
         roslib
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosnode = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, rostest, rostopic, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2212,7 +2330,8 @@ let
         rostest
         rostopic
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosout = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, roscpp, rosgraph_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -2231,7 +2350,8 @@ let
         roscpp
         rosgraph_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosparam = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2249,7 +2369,8 @@ let
         catkin
         rosgraph
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rospy = callPackage ({ catkin, cmake, genpy, gtest, pkgconfig, pyEnv, roscpp, rosgraph, rosgraph_msgs, roslib, std_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2272,7 +2393,8 @@ let
         roslib
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rosservice = callPackage ({ catkin, cmake, genpy, gtest, pkgconfig, pyEnv, rosgraph, roslib, rosmsg, rospy, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2294,7 +2416,8 @@ let
         rosmsg
         rospy
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rostest = callPackage ({ boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, roslaunch, rosmaster, rospy, rosunit, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2317,7 +2440,8 @@ let
         rospy
         rosunit
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     rostopic = callPackage ({ catkin, cmake, genpy, gtest, pkgconfig, pyEnv, rosbag, rospy, rostest, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2338,7 +2462,8 @@ let
         rospy
         rostest
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     roswtf = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosbuild, rosgraph, roslaunch, roslib, rosnode, rosservice, rostest, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2362,7 +2487,8 @@ let
         rosservice
         rostest
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     topic_tools = callPackage ({ catkin, cmake, cpp_common, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp, rostest, rostime, rosunit, std_msgs, stdenv, xmlrpcpp }:
     stdenv.mkDerivation (pyBuild {
@@ -2389,7 +2515,8 @@ let
         std_msgs
         xmlrpcpp
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     xmlrpcpp = callPackage ({ catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -2407,7 +2534,8 @@ let
         catkin
         cpp_common
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosgraph_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
@@ -2427,7 +2555,8 @@ let
         message_runtime
         std_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     std_srvs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -2446,7 +2575,8 @@ let
         message_generation
         message_runtime
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosbag_migration_rule = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -2463,7 +2593,8 @@ let
         pyEnv
         catkin
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rosconsole_bridge = callPackage ({ catkin, cmake, console-bridge, gtest, pkgconfig, pyEnv, rosconsole, stdenv }:
     stdenv.mkDerivation {
@@ -2482,7 +2613,8 @@ let
         console-bridge
         rosconsole
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     cpp_common = callPackage ({ boost, catkin, cmake, console-bridge, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -2501,7 +2633,8 @@ let
         catkin
         console-bridge
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     roscpp_core = callPackage ({ catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, roscpp_serialization, roscpp_traits, rostime, stdenv }:
     stdenv.mkDerivation {
@@ -2522,7 +2655,8 @@ let
         roscpp_traits
         rostime
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     roscpp_serialization = callPackage ({ catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, roscpp_traits, rostime, stdenv }:
     stdenv.mkDerivation {
@@ -2542,7 +2676,8 @@ let
         roscpp_traits
         rostime
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     roscpp_traits = callPackage ({ catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, rostime, stdenv }:
     stdenv.mkDerivation {
@@ -2561,7 +2696,8 @@ let
         cpp_common
         rostime
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rostime = callPackage ({ boost, catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -2580,7 +2716,8 @@ let
         catkin
         cpp_common
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     roslisp = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph_msgs, roslang, rospack, sbcl, std_srvs, stdenv }:
     stdenv.mkDerivation {
@@ -2602,7 +2739,8 @@ let
         sbcl
         std_srvs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     rospack = callPackage ({ boost, catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, tinyxml }:
     stdenv.mkDerivation {
@@ -2624,7 +2762,8 @@ let
         pkgconfig
         tinyxml
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     std_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -2643,7 +2782,8 @@ let
         message_generation
         message_runtime
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
     cv_bridge = callPackage ({ boost, catkin, cmake, gtest, opencv3, pkgconfig, pyEnv, rosconsole, sensor_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2664,7 +2804,8 @@ let
         rosconsole
         sensor_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     image_geometry = callPackage ({ catkin, cmake, gtest, opencv3, pkgconfig, pyEnv, sensor_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
@@ -2683,7 +2824,8 @@ let
         opencv3
         sensor_msgs
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     })) {};
     vision_opencv = callPackage ({ catkin, cmake, cv_bridge, gtest, image_geometry, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
@@ -2702,21 +2844,30 @@ let
         cv_bridge
         image_geometry
       ];
-      inherit cmakeFlags postInstall;
+      inherit cmakeFlags postInstall
+      postFixup;
     }) {};
   };
 in if (import <nixpkgs> {}).lib.inNixShell
    then stdenv.mkDerivation {
-          name = "rosPackages";
-          buildInputs = [
-            cmake
-            pkgconfig
-            glib
-          ] ++ stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet);
-          src = [];
-          shellHook = ''
-            export ROS_PACKAGE_PATH=${stdenv.lib.concatStringsSep ":" (stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet))}
-            ${stdenv.lib.concatMapStringsSep "\n" rosShellHook (stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet))}
-          '';
-        }
-   else rosPackageSet
+    name = "rosPackages";
+    buildInputs = [
+      cmake
+      pkgconfig
+      glib
+     ] ++ stdenv.lib.filter builtins.isAttrs (stdenv.lib.attrValues rosPackageSet);
+    src = [];
+    shellHook = ''
+      export ROS_PACKAGE_PATH=${with stdenv.lib; with builtins;
+      concatStringsSep ":" (filter isAttrs (attrValues rosPackageSet))}
+      export PYTHONPATH=${with stdenv.lib; with builtins;
+      concatStringsSep ":" (map (d: d + "/lib/python2.7/site-packages")
+                                (filter isAttrs
+                                        (attrValues rosPackageSet)))}
+      ${with stdenv.lib; with builtins;
+        concatMapStringsSep "\n"
+          rosShellHook
+          (filter isAttrs (attrValues rosPackageSet))}
+    '';
+  }
+  else rosPackageSet
