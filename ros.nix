@@ -1,4 +1,4 @@
-{ nixpkgs ? (import <nixpkgs> {}) }:
+{ nixpkgs ? (import ./nixpkgs {}) }:
 with nixpkgs;
 let localPackages = rec {
       console-bridge = callPackage ./console-bridge.nix {};
