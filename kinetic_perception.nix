@@ -215,6 +215,9 @@ let
       ];
       inherit cmakeFlags postInstall
       postFixup;
+      postPatch = ''
+        sed -i -e 's/find_package(UUID REQUIRED)//' -e 's/''${UUID_LIBRARIES}//' ./CMakeLists.txt
+      '';
     }) {};
     bondpy = callPackage ({ bond, catkin, cmake, gtest, pkgconfig, pyEnv, rospy, smclib, stdenv, uuid }:
     stdenv.mkDerivation (pyBuild {
@@ -322,10 +325,10 @@ let
     actionlib_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "actionlib_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/actionlib_msgs/1.12.4-0.tar.gz";
-        sha256 = "1hfzidv33zkk7qph6adi07z1j6gqzfjv7zsg2xlpx5pbsv2bkwz4";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/actionlib_msgs/1.12.5-0.tar.gz";
+        sha256 = "1g36bmqr6zw2a5aicrp33dff3wvvlnivldrc74j6yhlhdpsyqi0s";
       };
       propagatedBuildInputs = [
         cmake
@@ -343,10 +346,10 @@ let
     common_msgs = callPackage ({ actionlib_msgs, catkin, cmake, diagnostic_msgs, geometry_msgs, gtest, nav_msgs, pkgconfig, pyEnv, sensor_msgs, shape_msgs, stdenv, stereo_msgs, trajectory_msgs, visualization_msgs }:
     stdenv.mkDerivation {
       name = "common_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/common_msgs/1.12.4-0.tar.gz";
-        sha256 = "0jwqsxr52dcbfy9hf00fvc5fvqx2f3dxs93sjalj4njjr7cqq0ay";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/common_msgs/1.12.5-0.tar.gz";
+        sha256 = "1jlxws622w7qln762pxi8rhd1v54zpi84480qpcz345hr7y2skv6";
       };
       propagatedBuildInputs = [
         cmake
@@ -370,10 +373,10 @@ let
     diagnostic_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "diagnostic_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/diagnostic_msgs/1.12.4-0.tar.gz";
-        sha256 = "0gxwf33mzyk39mmpdln6jxh9s64pwbalx82z5ym6hkn1hgd8sjs0";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/diagnostic_msgs/1.12.5-0.tar.gz";
+        sha256 = "1m89c2jzgk0mmzfnb7ifg6cfk5k6gsdi7pxa5dgf5zhgm1saczd2";
       };
       propagatedBuildInputs = [
         cmake
@@ -391,10 +394,10 @@ let
     geometry_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "geometry_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/geometry_msgs/1.12.4-0.tar.gz";
-        sha256 = "04200rym9d6bdi3lx0sgwzi56c8y47zba5mm8pwclpjp10b8d5lb";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/geometry_msgs/1.12.5-0.tar.gz";
+        sha256 = "01fq8f7xmv0sm1ynx53xi37y4csrb27d66z46vxq7ia6s8g77m1i";
       };
       propagatedBuildInputs = [
         cmake
@@ -412,10 +415,10 @@ let
     nav_msgs = callPackage ({ actionlib_msgs, catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "nav_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/nav_msgs/1.12.4-0.tar.gz";
-        sha256 = "05j133jxjnwfqqnpgkq4cj77yvqhmmwnns5czrf1ng776khs2hk3";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/nav_msgs/1.12.5-0.tar.gz";
+        sha256 = "02ragfkh2xsl1sj5kbf3swld6xhidsp3s2r55fcd91930dpn6708";
       };
       propagatedBuildInputs = [
         cmake
@@ -435,10 +438,10 @@ let
     sensor_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "sensor_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/sensor_msgs/1.12.4-0.tar.gz";
-        sha256 = "1bdrjnybkj3qic34jlgi0m3xm674104f3dcf5v8qzq6a4ix3zb3m";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/sensor_msgs/1.12.5-0.tar.gz";
+        sha256 = "0jpd079crkrybaxa16m05i733v3lawnmb7gi21i55040k0gf9v3z";
       };
       propagatedBuildInputs = [
         cmake
@@ -457,10 +460,10 @@ let
     shape_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "shape_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/shape_msgs/1.12.4-0.tar.gz";
-        sha256 = "0p61wjqi7mzf975m4cb0vzvh0dgiprjrps34psn2gm697x4v62mx";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/shape_msgs/1.12.5-0.tar.gz";
+        sha256 = "0z2h2adw75cx9isr0vn2h4q5cf9m64jkkdxcx6lv0ckra3psd6bv";
       };
       propagatedBuildInputs = [
         cmake
@@ -479,10 +482,10 @@ let
     stereo_msgs = callPackage ({ catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, sensor_msgs, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "stereo_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/stereo_msgs/1.12.4-0.tar.gz";
-        sha256 = "1j9maf6nam3q7d90nikrcdajkpfcpbqd9z4bssk9ycac9apf61cz";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/stereo_msgs/1.12.5-0.tar.gz";
+        sha256 = "0iwmy8pg7mys6cjpfffcm45s8wlh0njahpicgk6simqfg5v04v2i";
       };
       propagatedBuildInputs = [
         cmake
@@ -501,10 +504,10 @@ let
     trajectory_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosbag_migration_rule, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "trajectory_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/trajectory_msgs/1.12.4-0.tar.gz";
-        sha256 = "01gkqq57m886sk0ibjgcxbr2n6gd5b2qqzjdr0179vrhfarqv3wx";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/trajectory_msgs/1.12.5-0.tar.gz";
+        sha256 = "086w7knsmnz1ykw4ycqfwqxzy5i68d3shiqnqckiq0ajnz611gbp";
       };
       propagatedBuildInputs = [
         cmake
@@ -524,10 +527,10 @@ let
     visualization_msgs = callPackage ({ catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "visualization_msgs";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/visualization_msgs/1.12.4-0.tar.gz";
-        sha256 = "1a9ir5qc9xl74x0afd4j8lric8z1d0p53bryvf4qsx3mrlagvhc7";
+        url = "https://github.com/ros-gbp/common_msgs-release/archive/release/kinetic/visualization_msgs/1.12.5-0.tar.gz";
+        sha256 = "1ddf9pbzqi686wi5x7apdx52krhnfyabk4h2lvy9ykqina8cbvqk";
       };
       propagatedBuildInputs = [
         cmake
@@ -1236,10 +1239,10 @@ let
     compressed_depth_image_transport = callPackage ({ catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_transport, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
       name = "compressed_depth_image_transport";
-      version = "1.9.3-0";
+      version = "1.9.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/compressed_depth_image_transport/1.9.3-0.tar.gz";
-        sha256 = "0gkbw12dlymbrsn7q32xy1yqimmhz0vn56jl5978lsillvzih9f1";
+        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/compressed_depth_image_transport/1.9.5-0.tar.gz";
+        sha256 = "0i6snlmpqpmkd10bfxnbwdx8nnjjyqxvlm9l5f7rp653121hvnbw";
       };
       propagatedBuildInputs = [
         cmake
@@ -1257,10 +1260,10 @@ let
     compressed_image_transport = callPackage ({ catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_transport, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
       name = "compressed_image_transport";
-      version = "1.9.3-0";
+      version = "1.9.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/compressed_image_transport/1.9.3-0.tar.gz";
-        sha256 = "1r69h7mx1kbq9hd3nzxjbd0556frs5gflrgd09421iyq8rzm5rwi";
+        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/compressed_image_transport/1.9.5-0.tar.gz";
+        sha256 = "0gixdk03czzj5fwidj3nl9hgayxg4p81iq76gbn9n892c8q9whic";
       };
       propagatedBuildInputs = [
         cmake
@@ -1278,10 +1281,10 @@ let
     image_transport_plugins = callPackage ({ catkin, cmake, compressed_depth_image_transport, compressed_image_transport, gtest, pkgconfig, pyEnv, stdenv, theora_image_transport }:
     stdenv.mkDerivation {
       name = "image_transport_plugins";
-      version = "1.9.3-0";
+      version = "1.9.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/image_transport_plugins/1.9.3-0.tar.gz";
-        sha256 = "164kvwmmkb95is0qxqqfrrlwvji787kmvwfi1dwz04nlfgcf2a79";
+        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/image_transport_plugins/1.9.5-0.tar.gz";
+        sha256 = "1g15fy57pa28j3vni0cxb2wwvbjqm4c4dc3lg6pwsarnhhnfk3dv";
       };
       propagatedBuildInputs = [
         cmake
@@ -1299,10 +1302,10 @@ let
     theora_image_transport = callPackage ({ catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_transport, libogg, libtheora, message_generation, message_runtime, pkgconfig, pluginlib, pyEnv, rosbag, std_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "theora_image_transport";
-      version = "1.9.3-0";
+      version = "1.9.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/theora_image_transport/1.9.3-0.tar.gz";
-        sha256 = "1f6fsdd0lcck1kn1mpmh2d2h7h115vhjiq2mvzqfg3c12yjv7s73";
+        url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/kinetic/theora_image_transport/1.9.5-0.tar.gz";
+        sha256 = "0r11ddxn6ksdc913qbbqid7325al0cq5wglm9x9r396ydnjx4x8c";
       };
       propagatedBuildInputs = [
         cmake
@@ -2028,10 +2031,10 @@ let
     message_filters = callPackage ({ boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosconsole, roscpp, rostest, rosunit, stdenv, xmlrpcpp }:
     stdenv.mkDerivation (pyBuild {
       name = "message_filters";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/message_filters/1.12.4-0.tar.gz";
-        sha256 = "00b4c13zbjbyxdxpc86fn3j1ajgdb5wh1y9qxcypm7md1yw9p9bn";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/message_filters/1.12.5-0.tar.gz";
+        sha256 = "1n8h3pslmmdp6savrw44as0nxhfqflb4mjv7zih26258j3q4h8z3";
       };
       propagatedBuildInputs = [
         cmake
@@ -2052,10 +2055,10 @@ let
     ros_comm = callPackage ({ catkin, cmake, gtest, message_filters, pkgconfig, pyEnv, ros, rosbag, rosconsole, roscpp, rosgraph, rosgraph_msgs, roslaunch, roslisp, rosmaster, rosmsg, rosnode, rosout, rosparam, rospy, rosservice, rostest, rostopic, roswtf, std_srvs, stdenv, topic_tools, xmlrpcpp }:
     stdenv.mkDerivation {
       name = "ros_comm";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/ros_comm/1.12.4-0.tar.gz";
-        sha256 = "08p4p314akgy43wp8xgfs444rsd99qpbndmwdgxzfzbq5wkg9y7m";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/ros_comm/1.12.5-0.tar.gz";
+        sha256 = "0sxpmcvgbcmdix761dfzcgg2jc4zbkg8iaa1h37gs64q4z3m2l7x";
       };
       propagatedBuildInputs = [
         cmake
@@ -2092,10 +2095,10 @@ let
     rosbag = callPackage ({ boost, catkin, cmake, cpp_common, genmsg, genpy, gtest, pkgconfig, pyEnv, rosbag_storage, rosconsole, roscpp, roscpp_serialization, roslib, rospy, stdenv, topic_tools, xmlrpcpp }:
     stdenv.mkDerivation (pyBuild {
       name = "rosbag";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosbag/1.12.4-0.tar.gz";
-        sha256 = "0vi6i2gzpimn18ljmn7a6vhqh07h0kvvb4505h5k5fd8r3czzv7n";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosbag/1.12.5-0.tar.gz";
+        sha256 = "0jlq2dnr7bmrkswj9jjcz97mx64zgs7m38p9shbnqr3gvsm5hb6r";
       };
       propagatedBuildInputs = [
         cmake
@@ -2122,10 +2125,10 @@ let
     rosbag_storage = callPackage ({ boost, bzip2, catkin, cmake, console-bridge, cpp_common, gtest, pkgconfig, pyEnv, roscpp_serialization, roscpp_traits, roslz4, rostime, stdenv }:
     stdenv.mkDerivation {
       name = "rosbag_storage";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosbag_storage/1.12.4-0.tar.gz";
-        sha256 = "1pp5c722w9kw0w70hdrwfvr0gn7jnlqd5mda0fwa52k4kjrlsw59";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosbag_storage/1.12.5-0.tar.gz";
+        sha256 = "07hnd3zhgx54p70b1rhcnjclg9k4yvknfwrxdq28q51pqbsg022w";
       };
       propagatedBuildInputs = [
         cmake
@@ -2148,10 +2151,10 @@ let
     rosconsole = callPackage ({ apr, boost, catkin, cmake, cpp_common, gtest, log4cxx, pkgconfig, pyEnv, rosbuild, rostime, rosunit, stdenv }:
     stdenv.mkDerivation {
       name = "rosconsole";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosconsole/1.12.4-0.tar.gz";
-        sha256 = "0c492ysm3flkfs58jyxf8797g1dd43x7ymkbnf4r9z4qch1a80r2";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosconsole/1.12.5-0.tar.gz";
+        sha256 = "0zqjbmmm2lp5zaldiv7axqik3y0b6xdlrpz0z06jkjywgscj332a";
       };
       propagatedBuildInputs = [
         cmake
@@ -2173,10 +2176,10 @@ let
     roscpp = callPackage ({ catkin, cmake, cpp_common, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp_serialization, roscpp_traits, rosgraph_msgs, roslang, rostime, std_msgs, stdenv, xmlrpcpp }:
     stdenv.mkDerivation {
       name = "roscpp";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roscpp/1.12.4-0.tar.gz";
-        sha256 = "1bywr2qxxfglbvym1spd7r8zyh8mffz305dnnxhiiii50msikwsh";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roscpp/1.12.5-0.tar.gz";
+        sha256 = "0iqk7r0444xrq52dkw2d53p5gaf8sv89zq3nrbwfrf82awsnyq0l";
       };
       propagatedBuildInputs = [
         cmake
@@ -2203,10 +2206,10 @@ let
     rosgraph = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rosgraph";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosgraph/1.12.4-0.tar.gz";
-        sha256 = "19b1iw75w5pjrch21davx6mrqs0qv1lc03crckm8irbdilp8cgb7";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosgraph/1.12.5-0.tar.gz";
+        sha256 = "0msanppmvai95g04q5n2d7z8jhyvn0904yjs6wqfr4jzzd6p18bz";
       };
       propagatedBuildInputs = [
         cmake
@@ -2221,10 +2224,10 @@ let
     roslaunch = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosclean, rosgraph_msgs, roslib, rosmaster, rosout, rosparam, rosunit, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "roslaunch";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roslaunch/1.12.4-0.tar.gz";
-        sha256 = "0641k8ljk2rvj0y5891lmwkxzqq09r2bm47a2baz9m3hzd47wfrj";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roslaunch/1.12.5-0.tar.gz";
+        sha256 = "0dwcmcjigl8x0wxm1fjnhw8lvcq80c3la9jkkzs4brhz794zhxnj";
       };
       propagatedBuildInputs = [
         cmake
@@ -2246,10 +2249,10 @@ let
     roslz4 = callPackage ({ catkin, cmake, gtest, lz4, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "roslz4";
-      version = "4-1.12.4-0";
+      version = "4-1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roslz4/1.12.4-0.tar.gz";
-        sha256 = "1z7rsbq1jmzj1cjsxng4m4bxira2agkcl36zn0zdf74sslz9gkc8";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roslz4/1.12.5-0.tar.gz";
+        sha256 = "12zq0x365yb5sziy2grmlr13px8phy9hjy371h791ib8vbqq7wbn";
       };
       propagatedBuildInputs = [
         cmake
@@ -2265,10 +2268,10 @@ let
     rosmaster = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rosmaster";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosmaster/1.12.4-0.tar.gz";
-        sha256 = "1rk9jxx8f6n88cah2q2gpbny0bcrrax1iwd2iyj22qxsa782jsg3";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosmaster/1.12.5-0.tar.gz";
+        sha256 = "0qrd9q0r104i15yfb4aca9xsdcpgzds3gw7is4z34xviikz4mqm0";
       };
       propagatedBuildInputs = [
         cmake
@@ -2284,10 +2287,10 @@ let
     rosmsg = callPackage ({ catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, rosbag, roslib, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rosmsg";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosmsg/1.12.4-0.tar.gz";
-        sha256 = "0vaks2z0r3frhlzas3gm3ysd0a8ydlaxvf350hwgscvjshh1i4cy";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosmsg/1.12.5-0.tar.gz";
+        sha256 = "1r83s7h9560f9yszy7jln3qmibynajqkbdp3ir461g9z6w10977j";
       };
       propagatedBuildInputs = [
         cmake
@@ -2305,10 +2308,10 @@ let
     rosnode = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, rostest, rostopic, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rosnode";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosnode/1.12.4-0.tar.gz";
-        sha256 = "1lfpcn63ay877d8drr6cq8bbzqv9sr4q2pyhswkmmqsf1mi9qzaj";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosnode/1.12.5-0.tar.gz";
+        sha256 = "0w84l8vfppidv79azm3xm29cq7zm2k92p19789k4a3cv2hsg6k1a";
       };
       propagatedBuildInputs = [
         cmake
@@ -2326,10 +2329,10 @@ let
     rosout = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, roscpp, rosgraph_msgs, stdenv }:
     stdenv.mkDerivation {
       name = "rosout";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosout/1.12.4-0.tar.gz";
-        sha256 = "0gl1zjamfj1b02g6r27k8a13d7pisl5qy9bljkkr88p2iflc30wc";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosout/1.12.5-0.tar.gz";
+        sha256 = "0qkzfhv3qxi5lahm93xlavmswz2zwpdb7qbsrnl0zijaq7s5pgva";
       };
       propagatedBuildInputs = [
         cmake
@@ -2346,10 +2349,10 @@ let
     rosparam = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rosparam";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosparam/1.12.4-0.tar.gz";
-        sha256 = "0r6f13x3w5wc2ym3k0h58iq8wplhrdfw71zrsgvad7m398vy9xcr";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosparam/1.12.5-0.tar.gz";
+        sha256 = "1yknl62pwwkv36jhn31hjqy13ls7f0j2jhzhmmf1yrc5h6hq2hxr";
       };
       propagatedBuildInputs = [
         cmake
@@ -2365,10 +2368,10 @@ let
     rospy = callPackage ({ catkin, cmake, genpy, gtest, pkgconfig, pyEnv, roscpp, rosgraph, rosgraph_msgs, roslib, std_msgs, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rospy";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rospy/1.12.4-0.tar.gz";
-        sha256 = "0jlpiq3k48g2cv50k28bw6gqll45dd0qjqdgdaajfz05fnl1kvkg";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rospy/1.12.5-0.tar.gz";
+        sha256 = "0vyb7q39gg2r7m4hjhiax0pwndndrr46hv6yi6pzdahy05641h45";
       };
       propagatedBuildInputs = [
         cmake
@@ -2389,10 +2392,10 @@ let
     rosservice = callPackage ({ catkin, cmake, genpy, gtest, pkgconfig, pyEnv, rosgraph, roslib, rosmsg, rospy, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rosservice";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosservice/1.12.4-0.tar.gz";
-        sha256 = "089p56an6y13f8fdgyaqgzqx7sily15vwrfmn7vcfb0jq6vv0znc";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rosservice/1.12.5-0.tar.gz";
+        sha256 = "01hj52s14sq07cphk9ymx137syr3a5jxb2zznj19cf6wshzaax88";
       };
       propagatedBuildInputs = [
         cmake
@@ -2412,10 +2415,10 @@ let
     rostest = callPackage ({ boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, roslaunch, rosmaster, rospy, rosunit, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rostest";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rostest/1.12.4-0.tar.gz";
-        sha256 = "1xwqknpvn066p57l4442zs2csdnajif3xgk00hylcdrmaycpl7cl";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rostest/1.12.5-0.tar.gz";
+        sha256 = "1073av6d8fwx3q3b4wb2r8m5nrmyq1fz9f5ndh3p02z5vlb45hzy";
       };
       propagatedBuildInputs = [
         cmake
@@ -2436,10 +2439,10 @@ let
     rostopic = callPackage ({ catkin, cmake, genpy, gtest, pkgconfig, pyEnv, rosbag, rospy, rostest, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "rostopic";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rostopic/1.12.4-0.tar.gz";
-        sha256 = "18s5wx5b6iarbrm54rlvjdayrmv3bjs1c1s08h7q3i31npzf2ilv";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/rostopic/1.12.5-0.tar.gz";
+        sha256 = "02vmd3mvhydz1g420dspr69qyl4mzsghihsrf97vzwycj0bx6f94";
       };
       propagatedBuildInputs = [
         cmake
@@ -2458,10 +2461,10 @@ let
     roswtf = callPackage ({ catkin, cmake, gtest, pkgconfig, pyEnv, rosbuild, rosgraph, roslaunch, roslib, rosnode, rosservice, rostest, stdenv }:
     stdenv.mkDerivation (pyBuild {
       name = "roswtf";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roswtf/1.12.4-0.tar.gz";
-        sha256 = "17cgrwjly1v5fx1qrzz1j9i6fz13f0g42w9wqd8ds11akdyzjv5h";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/roswtf/1.12.5-0.tar.gz";
+        sha256 = "1c2ckdix9xvijpygm5h4mphgh0cvlqrynv2v1wbdasrkr2h666qx";
       };
       propagatedBuildInputs = [
         cmake
@@ -2483,10 +2486,10 @@ let
     topic_tools = callPackage ({ catkin, cmake, cpp_common, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp, rostest, rostime, rosunit, std_msgs, stdenv, xmlrpcpp }:
     stdenv.mkDerivation (pyBuild {
       name = "topic_tools";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/topic_tools/1.12.4-0.tar.gz";
-        sha256 = "05gw7rdacmayn9hdm26r4qvcnjan6qkx93pfvscqdn9hk2sa0grx";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/topic_tools/1.12.5-0.tar.gz";
+        sha256 = "1rfhmm68d65lba23vq5665hdrfmviqcbkspmypcr78nw57jl9khb";
       };
       propagatedBuildInputs = [
         cmake
@@ -2511,10 +2514,10 @@ let
     xmlrpcpp = callPackage ({ catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
       name = "xmlrpcpp";
-      version = "1.12.4-0";
+      version = "1.12.5-0";
       src = fetchurl {
-        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/xmlrpcpp/1.12.4-0.tar.gz";
-        sha256 = "1xscigmj4n2jyj8cfxkcgbjmy0jhd5kkdvmvjwx0ikqmwh8bcdh1";
+        url = "https://github.com/ros-gbp/ros_comm-release/archive/release/kinetic/xmlrpcpp/1.12.5-0.tar.gz";
+        sha256 = "1998rdaici5qhv3yagv26c5v42qcwda1mv2pp4y2dchjl6gjjvk6";
       };
       propagatedBuildInputs = [
         cmake

@@ -151,6 +151,9 @@ nixify pkg = mkFunction args body
             "geneus" ->
               [ nixKeyVal "preConfigure" $ mkStr Indented
                 "sed -i 's/COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE}/COMMAND ${CATKIN_ENV}/' ./cmake/geneus-extras.cmake.em" ]
+            "bondcpp" ->
+              [ nixKeyVal "postPatch" $ mkStr Indented
+                "sed -i -e 's/find_package(UUID REQUIRED)//' -e 's/${UUID_LIBRARIES}//' ./CMakeLists.txt" ]
             "image_view" ->
               [ nixKeyVal "NIX_CFLAGS_COMPILE"
                 $ mkDoubleQ [
