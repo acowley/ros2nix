@@ -154,6 +154,9 @@ nixify pkg = mkFunction args body
             "bondcpp" ->
               [ nixKeyVal "postPatch" $ mkStr Indented
                 "sed -i -e 's/find_package(UUID REQUIRED)//' -e 's/${UUID_LIBRARIES}//' ./CMakeLists.txt" ]
+            "nodelet" ->
+              [ nixKeyVal "postPatch" $ mkStr Indented
+                "sed -i -e 's/find_package(UUID REQUIRED)//' -e 's/ ${UUID_INCLUDE_DIRS}//' -e 's/ ${UUID_LIBRARIES}//g' ./CMakeLists.txt"]
             "image_view" ->
               [ nixKeyVal "NIX_CFLAGS_COMPILE"
                 $ mkDoubleQ [

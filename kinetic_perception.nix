@@ -1592,6 +1592,9 @@ let
       ];
       inherit cmakeFlags postInstall
       postFixup;
+      postPatch = ''
+        sed -i -e 's/find_package(UUID REQUIRED)//' -e 's/ ''${UUID_INCLUDE_DIRS}//' -e 's/ ''${UUID_LIBRARIES}//g' ./CMakeLists.txt
+      '';
     }) {};
     nodelet_core = callPackage ({ catkin, cmake, gtest, nodelet, nodelet_topic_tools, pkgconfig, pyEnv, stdenv }:
     stdenv.mkDerivation {
