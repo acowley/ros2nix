@@ -18,7 +18,9 @@ let localPackages = rec {
 #     inherit (darwin) libobjc;
 #     inherit (darwin.apple_sdk.frameworks) Cocoa;
 #    }
-  rosPackageSet = callPackage ./kinetic_comm.nix ({
+
+  # rosPackageSet = callPackage ./kinetic_comm.nix ({
+  rosPackageSet = callPackage ./kinetic_perception.nix ({
     inherit (nixpkgs) boost opencv3;
     uuid = null;
     inherit (localPackages) console-bridge poco;

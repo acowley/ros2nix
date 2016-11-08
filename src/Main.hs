@@ -163,6 +163,11 @@ nixify pkg = mkFunction (ParamSet args Nothing) body
             "pcl_ros" ->
               [ nixKeyVal "preConfigure" $ mkIndentedStr
                 "sed -i 's/find_package(Eigen3 REQUIRED)//' ./CMakeLists.txt" ]
+            "orocos_kdl" ->
+              [ nixKeyVal "preConfigure" $ mkIndented [
+                  Plain "sed -i 's|FIND_PATH(EIGEN3_INCLUDE_DIR Eigen/Core |FIND_PATH(EIGEN3_INCLUDE_DIR Eigen/Core "
+                  , Antiquoted (mkSym "eigen")
+                  , Plain "/include/eigen3 |' ./config/FindEigen3.cmake" ] ]
             "geneus" ->
               [ nixKeyVal "preConfigure" $ mkIndentedStr
                 "sed -i 's/COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE}/COMMAND ${CATKIN_ENV}/' ./cmake/geneus-extras.cmake.em" ]
