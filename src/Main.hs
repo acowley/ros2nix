@@ -51,6 +51,8 @@ data Package = Package { rosPackage' :: RosPackage
 --
 -- Example:
 -- @generateCache "/nix/store/2nrlfpcmd1l38s0km5isdcw9cv8qpmww-ros-kinetic-ros_comm-src/kinetic_ros_comm.rosinstall" "comm_hash_cache.txt"@
+-- Or
+-- @generateCache "/nix/store/fk0i7zj4zlblx92ddfpwmjd7x3f439n2-ros-kinetic-perception-src/kinetic_perception.rosinstall" "perception_hash_cache.txt"@
 generateCache :: FilePath -> FilePath -> IO ()
 generateCache rosInstall cacheOutput = withStdoutLogging $
   getPackages rosInstall
@@ -340,8 +342,8 @@ main :: IO ()
 main = withStdoutLogging $
        do -- args <- getArgs
           Opts f out <- execParser opts
-          -- cache <- loadCache "perception_hash_cache.txt"
-          cache <- loadCache "comm_hash_cache.txt"
+          cache <- loadCache "perception_hash_cache.txt"
+          -- cache <- loadCache "comm_hash_cache.txt"
           maybe (putStrLn "No hash cache available")
                 (const $ putStrLn "Using hash cache")
                 cache
