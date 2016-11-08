@@ -8,10 +8,11 @@ import Prelude hiding (lookup)
 
 rosPyDeps :: [Text]
 rosPyDeps = [ "numpy", "setuptools", "sphinx", "#six", "dateutil", "docutils"
-            , "argparse", "pyyaml", "nose", "rosdep", "rospkg"
+            , "argparse", "pyyaml", "nose", "rosdep", "rospkg", "rosdistro"
             , "rosinstall-generator", "wstool", "rosinstall", "catkin_tools"
             , "catkin_pkg", "bloom", "empy", "matplotlib", "pillow", "pydot"
             , "paramiko", "coverage", "netifaces", "mock", "psutil", "pyqt4"
+            , "vcstools"
             , "#pyside", "defusedxml", "(pygraphviz.override { doCheck = false; })"
             , "#(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })"]
 

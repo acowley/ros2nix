@@ -21,7 +21,7 @@ executable ros2nix
                        data-fix >= 0.0.3 && < 0.1,
                        directory,
                        filepath,
-                       hnix >= 0.2 && < 0.3,
+                       hnix >= 0.3 && < 0.4,
                        hxt >= 9.3 && < 9.4,
                        lens >= 4.13 && < 4.15,
                        logging >= 3.0 && < 3.1,

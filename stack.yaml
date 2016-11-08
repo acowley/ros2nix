@@ -1,4 +1,4 @@
-resolver: lts-7.1
+resolver: lts-7.7
 
 packages:
 - '.'
@@ -10,7 +10,7 @@ extra-deps:
 - yaml-light-0.1.4
 - yaml-light-lens-0.3.3.2
 - data-fix-0.0.3
-- hnix-0.2.1
+- hnix-0.3.4
 - logging-3.0.4
 - trifecta-1.6
 

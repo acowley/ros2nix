@@ -9,12 +9,20 @@ let localPackages = rec {
     };
 # in callPackage ./indigo_perception.nix {
 # in callPackage ./indigo_core.nix {
-in callPackage ./kinetic_perception.nix {
+# in callPackage ./kinetic_perception.nix {
+# in callPackage ./kinetic_comm.nix {
+#     inherit (nixpkgs) boost opencv3;
+# # libpng12-dev libtiff-dev libv4l-dev libvtk-qt protobuf-dev python-defusedxml;
+#     uuid = null;
+#     inherit (localPackages) console-bridge poco;
+#     inherit (darwin) libobjc;
+#     inherit (darwin.apple_sdk.frameworks) Cocoa;
+#    }
+  rosPackageSet = callPackage ./kinetic_comm4.nix ({
     inherit (nixpkgs) boost opencv3;
-# libpng12-dev libtiff-dev libv4l-dev libvtk-qt protobuf-dev python-defusedxml;
     uuid = null;
-    inherit (localPackages) console-bridge;
-    inherit (localPackages) poco;
+    inherit (localPackages) console-bridge poco;
     inherit (darwin) libobjc;
     inherit (darwin.apple_sdk.frameworks) Cocoa;
-   }
+  } // (callPackage ./ros-build-env.nix {} rosPackageSet.packages));
+in if lib.inNixShell then rosPackageSet.shell else rosPackageSet.packages
