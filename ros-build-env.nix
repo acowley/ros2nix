@@ -16,6 +16,9 @@ let
     if [ -d 'resources' ]; then
       cp -r resources ''$out
     fi
+    if [ -d 'images' ]; then
+      cp -r images ''$out
+    fi
     if [ -d 'env-hooks' ]; then
       cp -r env-hooks ''$out
     fi
@@ -37,7 +40,14 @@ let
       done
     fi
   '';
-  rosBuildHooks = { inherit cmakeFlags postInstall postFixup; };
+  extendAttrString = attrs: k: v: if attrs ? ${k} then attrs.${k} + v else v;
+  extendAttrList = attrs: k: v: if attrs ? ${k} then attrs.${k} ++ v else v;
+  rosBuildHooks = attrs: attrs // { 
+    cmakeFlags = extendAttrList attrs "cmakeFlags" cmakeFlags;
+    postInstall = extendAttrString attrs "postInstall" postInstall;
+    postFixup = extendAttrString attrs "postFixup" postFixup;
+  };
+# inherit cmakeFlags postInstall postFixup; };
   pyEnv = python27.buildEnv.override {
     extraLibs = with pyPackages; [
       numpy
@@ -92,9 +102,10 @@ let
 in rosPackageSet: {
   inherit pyEnv;
   mkRosPythonPackage = attrs:
-    stdenv.mkDerivation (pyBuild (attrs // rosBuildHooks));
-  mkRosCmakePackage = attrs: stdenv.mkDerivation (attrs // rosBuildHooks);
+    stdenv.mkDerivation (pyBuild (rosBuildHooks attrs));
+  mkRosCmakePackage = attrs: stdenv.mkDerivation (rosBuildHooks attrs);
   rosShell = ''
+    export ROS_MASTER_URI="http://localhost:11311"
     export ROS_PACKAGE_PATH=${with stdenv.lib;
       concatStringsSep ":" (filter builtins.isAttrs (attrValues rosPackageSet))}
     export PYTHONPATH=${with stdenv.lib;
