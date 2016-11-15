@@ -148,6 +148,9 @@ nixify pkg = mkFunction (ParamSet args Nothing) body
                            , Antiquoted (mkSym "stdenv.shell")
                            , Plain "|' ./cmake/templates/setup.sh.in\n"
                            ]]
+            "rosbash" ->
+              [ nixKeyVal "patchPhase" $ mkIndentedStr
+                "sed -i 's|_perm=\"+111\"|_perm=\"/111\"|' ./scripts/rosrun" ]
             "genmsg" ->
               [ nixKeyVal "patchPhase" $ mkIndentedStr
                 "sed -i 's/${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT}/${GENMSG_CHECK_DEPS_SCRIPT}/' ./cmake/pkg-genmsg.cmake.em\n" ]

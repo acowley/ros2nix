@@ -1630,6 +1630,9 @@ let
             pyEnv
             catkin
           ];
+          patchPhase = ''
+            sed -i 's|_perm="+111"|_perm="/111"|' ./scripts/rosrun
+          '';
         };
       rosboost_cfg = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
