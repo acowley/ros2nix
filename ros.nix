@@ -21,10 +21,12 @@ let localPackages = rec {
 
   # rosPackageSet = callPackage ./kinetic_comm.nix ({
   rosPackageSet = callPackage ./kinetic_perception.nix ({
-    inherit (nixpkgs) boost opencv3;
+    inherit (nixpkgs) boost opencv3 qt5;
     uuid = null;
     inherit (localPackages) console-bridge poco;
     inherit (darwin) libobjc;
     inherit (darwin.apple_sdk.frameworks) Cocoa;
+    extraPackages = { turtlesim = import ../RosNix/turtlesim.nix; };
   } // (callPackage ./ros-build-env.nix {} rosPackageSet.packages));
+#in rosPackageSet.packages.turtlesim  
 in if lib.inNixShell then rosPackageSet.shell else rosPackageSet.packages

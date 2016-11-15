@@ -295,7 +295,7 @@ letPackageSet pkgs =
                                                 (mkSym "packages"))
                                        (mkSym "v")
                                        (mkNonRecSet []))))
-                     (mkSym "rosPackageSet")) ]
+                     (mkOper2 NUpdate (mkSym "rosPackageSet") (mkSym "extraPackages"))) ]
   where pkgSet = mkNonRecSet $ map defPkg pkgs
         defPkg pkg = NamedVar (mkSelector (pkg ^. localName)) $ nixify pkg
 
@@ -315,7 +315,7 @@ mkMetaPackage pkgs = mkFunction (ParamSet args (Just "deps")) body'
                zip ("stdenv" : "fetchurl" : "glib" : "pango" : "gdk_pixbuf"
                     : "atk" : "libobjc" : "Cocoa" : "cmake" : "opencv3"
                     : "mkRosPythonPackage" : "mkRosCmakePackage" : "rosShell"
-                    : externalDeps pkgs)
+                    : "extraPackages ? {}" : externalDeps pkgs)
                    (repeat Nothing)
         body' = letPackageSet pkgs $
                 mkNonRecSet [ inherit [StaticKey "packages"]

@@ -1,4 +1,4 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, poco, rosShell, sbcl, stdenv, tinyxml, uuid, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, poco, rosShell, sbcl, stdenv, tinyxml, uuid, ... }@deps:
 let
     rosPackageSet = {
       actionlib = { actionlib_msgs, boost, catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, rospy, rostest, std_msgs, stdenv }:
@@ -2509,7 +2509,7 @@ let
     };
     packages = stdenv.lib.mapAttrs (_:
     v:
-      stdenv.lib.callPackageWith (deps // packages) v {}) rosPackageSet;
+      stdenv.lib.callPackageWith (deps // packages) v {}) (rosPackageSet // extraPackages);
     in {
       inherit packages;
       shell = stdenv.mkDerivation {
