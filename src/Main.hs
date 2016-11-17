@@ -26,9 +26,8 @@ import System.Process (callProcess, readCreateProcessWithExitCode, proc)
 import Text.XML.HXT.Core
 
 -- Example usage:
--- stack exec -- ros2nix $(nix-store -r $(nix-instantiate ../Nix/Ros/default.nix -A indigo.ros_core-src))/indigo_ros_core.rosinstall -o indigo_core.nix
--- stack exec ros2nix -- $(nix-build --no-out-link ../RosNix/default.nix -A kinetic.perception-src)/kinetic_perception.rosinstall -o kinetic_perception.nix
--- stack exec ros2nix -- $(nix-build --no-out-link ../RosNix/default.nix -A kinetic.ros_comm-src)/kinetic_ros_comm.rosinstall -o kinetic_comm.nix
+-- stack exec ros2nix -- $(nix-build --no-out-link ./ros-distro.nix -A kinetic.perception-src)/kinetic_perception.rosinstall -o kinetic_perception.nix
+-- stack exec ros2nix -- $(nix-build --no-out-link ./ros-distro.nix -A kinetic.ros_comm-src)/kinetic_ros_comm.rosinstall -o kinetic_comm.nix
 
 data RosPackage = RosPackage { _localName :: Text
                              , _uri       :: Text

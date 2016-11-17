@@ -47,7 +47,6 @@ let
     postInstall = extendAttrString attrs "postInstall" postInstall;
     postFixup = extendAttrString attrs "postFixup" postFixup;
   };
-# inherit cmakeFlags postInstall postFixup; };
   pyEnv = python27.buildEnv.override {
     extraLibs = with pyPackages; [
       numpy
@@ -87,7 +86,7 @@ let
   };
   pyPackages = python27Packages.override (_: {
     python = pyEnv.python;
-  }) // callPackage ./ros-python-packages.nix {
+  }) // callPackage "${callPackage ./ros-python-packages.nix {}}/ros-python-packages.nix" {
     inherit fetchurl;
     inherit (pyPackages) buildPythonPackage;
     extradeps = { inherit (pyPackages) setuptools; };
