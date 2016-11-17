@@ -44,6 +44,8 @@ $ nix-shell ros.nix
 $ rosrun turtlesim turtle_teleop_key
 ```
 
+![turtlesim demo](/images/TurtleDemo.jpg?raw=true "turtlesim demo")
+
 # Ugly Gotchas to be Fixed
 
 ## Hash Caching
