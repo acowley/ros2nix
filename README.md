@@ -6,7 +6,7 @@ To enter a `nix-shell` with the [ROS Kinetic](http://wiki.ros.org/kinetic) Comm 
 ```shell
 $ nix-shell ros.nix
 ```
-(Note that building everything takes some time!). This is actually a slight extension of the stock `comm` variant so that the [turtlesim](http://wiki.ros.org/turtlesim) tutorial can run.
+(Note that building everything takes some time!). This is actually a [slight extension](https://github.com/acowley/ros2nix/blob/master/ros.nix#L23) of the stock `comm` variant so that the [turtlesim](http://wiki.ros.org/turtlesim) tutorial can run.
 
 ## Regenerating a ROS Distribution
 
