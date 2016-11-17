@@ -405,10 +405,10 @@ let
       dynamic_reconfigure = { boost, catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, roscpp_serialization, roslib, rospy, rosservice, rostest, std_msgs, stdenv }:
       mkRosPythonPackage {
           name = "dynamic_reconfigure";
-          version = "1.5.45-0";
+          version = "1.5.46-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/dynamic_reconfigure-release/archive/release/kinetic/dynamic_reconfigure/1.5.45-0.tar.gz";
-            sha256 = "1vh9ywvzj2wgqnbn1m2fcaljm5032xicvq6cjz5pcs7b3z57qa4m";
+            url = "https://github.com/ros-gbp/dynamic_reconfigure-release/archive/release/kinetic/dynamic_reconfigure/1.5.46-0.tar.gz";
+            sha256 = "0w13zv6zglmgzwa3wlng5iph0qhfyvmqmajp9b919gls3rmcqpqf";
           };
           propagatedBuildInputs = [
             cmake
@@ -1340,10 +1340,10 @@ let
       nodelet = { bondcpp, boost, catkin, cmake, cmake_modules, gtest, message_generation, message_runtime, pkgconfig, pluginlib, pyEnv, rosconsole, roscpp, rospy, std_msgs, stdenv, tinyxml, uuid }:
       mkRosCmakePackage {
           name = "nodelet";
-          version = "1.9.7-0";
+          version = "1.9.8-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/kinetic/nodelet/1.9.7-0.tar.gz";
-            sha256 = "142aj35yplx3fs9882h944dihp12gkrbw8jvs4a4mf4s595q1cxv";
+            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/kinetic/nodelet/1.9.8-0.tar.gz";
+            sha256 = "1nq2ywab2hzvvqa4v5rwl4va4qaqmdfipgw5gw0ayladq2b4fdp3";
           };
           propagatedBuildInputs = [
             cmake
@@ -1371,10 +1371,10 @@ let
       nodelet_core = { catkin, cmake, gtest, nodelet, nodelet_topic_tools, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "nodelet_core";
-          version = "1.9.7-0";
+          version = "1.9.8-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/kinetic/nodelet_core/1.9.7-0.tar.gz";
-            sha256 = "0yfc500496adyvsqkgxwvwh31fq7hyj36b3bsgcxvd2mh8wzpq0f";
+            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/kinetic/nodelet_core/1.9.8-0.tar.gz";
+            sha256 = "1rx8vaijnz84kvxw2kr9wlxsrrk9vdav3y38lalgi4ykl14y5igk";
           };
           propagatedBuildInputs = [
             cmake
@@ -1389,10 +1389,10 @@ let
       nodelet_topic_tools = { boost, catkin, cmake, dynamic_reconfigure, gtest, message_filters, nodelet, pkgconfig, pluginlib, pyEnv, roscpp, stdenv }:
       mkRosCmakePackage {
           name = "nodelet_topic_tools";
-          version = "1.9.7-0";
+          version = "1.9.8-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/kinetic/nodelet_topic_tools/1.9.7-0.tar.gz";
-            sha256 = "1gkamfgl9naisjn2bhnyzf3733mrlqsl5460kmd5jj9q8ibpplnx";
+            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/kinetic/nodelet_topic_tools/1.9.8-0.tar.gz";
+            sha256 = "0z1rb17js58vn0b0115i8ahs3511mj4lwd0nnjbfvwnv7l18rzmm";
           };
           propagatedBuildInputs = [
             cmake
