@@ -321,6 +321,7 @@ mkMetaPackage pkgs = mkFunction (ParamSet args (Just "deps")) body'
                    (repeat Nothing)
         body' = letPackageSet pkgs $
                 mkNonRecSet [ inherit [StaticKey "packages"]
+                            , nixKeyVal "definitions" (mkSym "rosPackageSet")
                             , nixKeyVal "shell" body ]
         body = mkApp (mkSym "stdenv.mkDerivation") $
                mkNonRecSet

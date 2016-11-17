@@ -1,4 +1,4 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pkgconfig, rosShell, sbcl, stdenv, tinyxml, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pkgconfig, rosShell, sbcl, stdenv, tinyxml, ... }@deps:
 let
     rosPackageSet = {
       catkin = { cmake, gtest, pkgconfig, pyEnv, stdenv }:
@@ -255,6 +255,9 @@ let
             pyEnv
             catkin
           ];
+          patchPhase = ''
+            sed -i 's|_perm="+111"|_perm="/111"|' ./scripts/rosrun
+          '';
         };
       rosboost_cfg = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
@@ -1024,9 +1027,10 @@ let
     };
     packages = stdenv.lib.mapAttrs (_:
     v:
-      stdenv.lib.callPackageWith (deps // packages) v {}) rosPackageSet;
+      stdenv.lib.callPackageWith (deps // packages) v {}) (rosPackageSet // extraPackages);
     in {
       inherit packages;
+      definitions = rosPackageSet;
       shell = stdenv.mkDerivation {
         name = "rosPackages";
         buildInputs = [

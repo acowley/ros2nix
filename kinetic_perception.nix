@@ -2515,6 +2515,7 @@ let
       stdenv.lib.callPackageWith (deps // packages) v {}) (rosPackageSet // extraPackages);
     in {
       inherit packages;
+      definitions = rosPackageSet;
       shell = stdenv.mkDerivation {
         name = "rosPackages";
         buildInputs = [

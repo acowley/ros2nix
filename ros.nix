@@ -7,13 +7,23 @@ let localPackages = rec {
       urdfdom-headers = callPackage ./urdfdom-headers.nix {};
       urdfdom = callPackage ./urdfdom.nix { inherit urdfdom-headers console-bridge; };
     };
-  # rosPackageSet = callPackage ./kinetic_comm.nix ({
-  rosPackageSet = callPackage ./kinetic_perception.nix ({
+  distroParams = {
     inherit (nixpkgs) boost opencv3 qt5;
-    uuid = null;
+    uuid = if nixpkgs ? uuid then nixpkgs.uuid else null;
     inherit (localPackages) console-bridge poco;
     inherit (darwin) libobjc;
     inherit (darwin.apple_sdk.frameworks) Cocoa;
-    extraPackages = { turtlesim = import ./turtlesim.nix; };
-  } // (callPackage ./ros-build-env.nix {} rosPackageSet.packages));
-in if lib.inNixShell then rosPackageSet.shell else rosPackageSet.packages
+  };
+  perception = callPackage ./kinetic_perception.nix (distroParams // {
+    extraPackages = {
+      turtlesim = import ./turtlesim.nix;
+    };
+  } // callPackage ./ros-build-env.nix {} perception.packages);
+  comm = callPackage ./kinetic_comm.nix (distroParams // {
+    extraPackages = {
+      turtlesim = import ./turtlesim.nix;
+      inherit (perception.definitions) geometry_msgs;
+    };
+  } // callPackage ./ros-build-env.nix {} comm.packages);
+in if lib.inNixShell then comm.shell else comm.packages
+# in if lib.inNixShell then perception.shell else perception.packages
