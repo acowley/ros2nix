@@ -33,6 +33,7 @@ let localPackages = rec {
       gazebo_ros = import ./gazebo_ros_pkgs/gazebo_ros/default.nix;
       gazebo_plugins = import ./gazebo_ros_pkgs/gazebo_plugins/default.nix;
       diagnostic_updater = import ./diagnostic_updater.nix;
+      diagnostic_aggregator = import ./diagnostic_aggregator.nix;
       rospy_tutorials = import ./rospy_tutorials.nix;
       urdf_parser_plugin = import ./robot_model/urdf_parser_plugin/default.nix;
       urdf = import ./robot_model/urdf/default.nix;
@@ -42,7 +43,7 @@ let localPackages = rec {
         rosbag_migration_rule dynamic_reconfigure
         cv_bridge polled_camera camera_info_manager image_transport 
         camera_calibration_parsers pluginlib class_loader nodelet 
-        bond bondcpp smclib rosconsole_bridge;
+        bond bondcpp bondpy smclib rosconsole_bridge xmlrpcpp;
     } // localPackages;
   } // callPackage ./ros-build-env.nix {} sim.packages);
 in if lib.inNixShell then sim.shell else sim.packages
