@@ -15,6 +15,9 @@ mkRosCmakePackage rec {
     tar --strip-components=1 -xf ${src} ros_tutorials-0.7.1/turtlesim
     export sourceRoot="$PWD"/turtlesim
   '';
+  preConfigure = stdenv.lib.optionalString stdenv.isDarwin ''
+    export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -F${qt5.qtbase}/lib"
+  '';
   configurePhase = ''
     cmakeConfigurePhase
   '';
