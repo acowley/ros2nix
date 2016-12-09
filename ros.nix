@@ -13,6 +13,7 @@ let localPackages = rec {
     inherit (localPackages) console-bridge poco;
     inherit (darwin) libobjc;
     inherit (darwin.apple_sdk.frameworks) Cocoa;
+    protobuf = nixpkgs.protobuf3_1;
   };
   perception = callPackage ./kinetic_perception.nix (distroParams // {
     extraPackages = {
