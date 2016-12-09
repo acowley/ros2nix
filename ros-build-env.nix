@@ -69,7 +69,7 @@ let
       bloom
       empy
       matplotlib
-      pillow
+      (pillow.override { doCheck = false; })
       pydot
       paramiko
       coverage
