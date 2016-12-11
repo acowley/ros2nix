@@ -2,8 +2,8 @@
 let pip2nix = import (fetchFromGitHub {
       owner = "acowley";
       repo = "pip2nix";
-      rev = "388b76bddf2f9f968052bba480929d69453d55c7";
-      sha256 = "0fms3bnr9h4rzzj77x24nd6hvi6gbksddfgiim8j9vj5hn78zfjz";
+      rev = "d2fc2136199ca33e669d8e1cc4d4a26a6c33db64";
+      sha256 = "1pwq8yidyl28mdnxy1hxr0jgd82w9s0m3mfbw59pflbj0w8g9i94";
     }) {
        inherit (pkgs.pythonPackages) buildPythonApplication pip;
        inherit (pkgs) nix cacert;
