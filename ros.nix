@@ -1,4 +1,20 @@
-{ nixpkgs ? (import ./nixpkgs {}) }:
+# { nixpkgs ? (import ./nixpkgs { overlays = [import ./ros-support-overlay.nix]; }) }:
+# with nixpkgs;
+# with (import <nixpkgs> { overlays = [import ./ros-support-overlay.nix]; });
+let
+  ov = self: super: {
+  console-bridge = super.callPackage ./console-bridge.nix {};
+  poco = super.callPackage ./poco.nix {};
+  collada-dom = super.callPackage ./collada-dom.nix {};
+  urdfdom-headers = super.callPackage ./urdfdom-headers.nix {};
+  urdfdom = super.callPackage ./urdfdom.nix {};
+  uuid = if super ? uuid then super.uuid else null;
+  inherit (super.darwin) libobjc;
+  inherit (super.darwin.apple_sdk.frameworks) Cocoa;
+  protobuf = super.protobuf3_1;
+  flann = super.callPackage ./flann.nix {};
+};
+nixpkgs = import <nixpkgs> { overlays = [ov]; }; in
 with nixpkgs;
 let localPackages = rec {
       console-bridge = import ./console-bridge.nix;
@@ -26,6 +42,17 @@ let localPackages = rec {
       inherit (perception.definitions) geometry_msgs;
     };
   } // callPackage ./ros-build-env.nix {} comm.packages);
+  lunar_comm = callPackage ./lunar_comm.nix ({
+    extraPackages = {
+      turtlesim = import ./turtlesim_lunar.nix;
+      inherit (lunar_perception.definitions) geometry_msgs;
+    };
+  } // callPackage ./ros-build-env.nix {} lunar_comm.packages);
+  lunar_perception = callPackage ./lunar_perception.nix ({
+    extraPackages = {
+      turtlesim = import ./turtlesim_lunar.nix;
+    };
+  } // callPackage ./ros-build-env.nix {} lunar_perception.packages);
   # The comm package set extended with Gazebo support
   sim = callPackage ./kinetic_sim.nix (distroParams // {
     extraPackages = {
@@ -38,14 +65,18 @@ let localPackages = rec {
       rospy_tutorials = import ./rospy_tutorials.nix;
       urdf_parser_plugin = import ./robot_model/urdf_parser_plugin/default.nix;
       urdf = import ./robot_model/urdf/default.nix;
-      inherit (perception.definitions) sensor_msgs geometry_msgs trajectory_msgs 
+      inherit (perception.definitions) sensor_msgs geometry_msgs trajectory_msgs
         angles actionlib actionlib_msgs diagnostic_msgs nav_msgs
         tf tf2 tf2_msgs tf2_ros tf2_py
         rosbag_migration_rule dynamic_reconfigure
-        cv_bridge polled_camera camera_info_manager image_transport 
-        camera_calibration_parsers pluginlib class_loader nodelet 
+        cv_bridge polled_camera camera_info_manager image_transport
+        camera_calibration_parsers pluginlib class_loader nodelet
         bond bondcpp bondpy smclib rosconsole_bridge xmlrpcpp;
     } // localPackages;
   } // callPackage ./ros-build-env.nix {} sim.packages);
-in if lib.inNixShell then sim.shell else sim.packages
+in if lib.inNixShell then lunar_perception.shell else lunar_perception.packages
+# in lunar_comm.packages.cmake_modules
+# in lunar_comm.packages.catkin
+# in (callPackage ./ros-build-env.nix {} {}).pyEnv.env
+# in if lib.inNixShell then sim.shell else sim.packages
 # in if lib.inNixShell then perception.shell else perception.packages

@@ -14,6 +14,7 @@ let
     indigo = "2014-07-22-indigo";
     jade = "2015-05-23-jade";
     kinetic = "2016-05-23-kinetic";
+    lunar = "2017-05-23-lunar";
   };
   srcPyEnv = python27.buildEnv.override {
     extraLibs = with rosPythonPackages; [
@@ -54,4 +55,5 @@ in
   indigo = mkDistro "indigo";
   jade = mkDistro "jade";
   kinetic = mkDistro "kinetic";
+  lunar = mkDistro "lunar";
 }

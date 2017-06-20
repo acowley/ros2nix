@@ -10,11 +10,21 @@ $ nix-shell ros.nix
 
 ## Regenerating a ROS Distribution
 
-If you want to regenerate the `kinetic_perception.nix` file that defines all the ROS packages that make up the distribution, you will use the `ros2nix` program:
+If you want to regenerate the `kinetic_perception.nix` file that defines all the ROS packages that make up the distribution, you will use the `ros2nix` program.
+
+If you haven't yet built `ros2nix2, build it now:
+
+```shell
+$ stack build
+```
+
+Now you can use `ros2nix` and a `rosinstall` file that defines the ROS distribution and installation variant you wish to use.
 
 ```shell
 $ stack exec ros2nix -- $(nix-build --no-out-link ./ros-distro.nix -A kinetic.perception-src)/kinetic_perception.rosinstall -o kinetic_perception.nix
 ```
+
+
 
 ## Other ROS Versions and Variants
 
@@ -65,4 +75,4 @@ $ rosrun turtlesim turtle_teleop_key
 The `ros2nix` program uses a cache mapping package names to Nix hashes of their source. The way that I generate the cache is by loading `src/Main.hs` in a GHCi REPL, and calling `generateCache "/nix/store/..../kinetic_perception.rosinstall" "perception_hash_cache.txt"`. The `ros2nix` program looks for that file, and, if it exists, uses it as a cache. If the file does not exist, it will download each ROS package. The use of this cache file was primarily intended for the development of `ros2nix` when it was being repeatedly run against the same `.rosinstall` files. It might not be necessary as the program stabilizes and is used less frequently.
 
 ## Pinned nixpkgs
-The infrastructure for using a pinned version of `nixpkgs` is included but not currently in use. I am awaiting the merging of a couple Pull Requests critical to having the `turtlesim` example work on macOS.
+The infrastructure for using a pinned version of `nixpkgs` is included but not currently in use.

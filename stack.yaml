@@ -1,28 +1,18 @@
-resolver: lts-7.7
+resolver: lts-8.19
 
 packages:
 - '.'
 
-# Dependency packages to be pulled from upstream that are not in the resolver
-# (e.g., acme-missiles-0.3)
 extra-deps:
 - HsSyck-0.53
 - yaml-light-0.1.4
-- yaml-light-lens-0.3.3.2
-- data-fix-0.0.3
+- yaml-light-lens-0.3.3.3
 - hnix-0.3.4
 - logging-3.0.4
-- trifecta-1.6
 
-# Override default flag values for local packages and extra-deps
 flags: {}
 
-# Extra package databases containing global packages
 extra-package-dbs: []
 
-# Extra directories used by stack for building
-# extra-include-dirs: [/path/to/dir]
-# extra-lib-dirs: [/path/to/dir]
-#
-# Allow a newer minor version of GHC than the snapshot specifies
-# compiler-check: newer-minor
+nix:
+  shell-file: shell.nix

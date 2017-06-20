@@ -42,7 +42,7 @@ let
   '';
   extendAttrString = attrs: k: v: if attrs ? ${k} then attrs.${k} + v else v;
   extendAttrList = attrs: k: v: if attrs ? ${k} then attrs.${k} ++ v else v;
-  rosBuildHooks = attrs: attrs // { 
+  rosBuildHooks = attrs: attrs // {
     cmakeFlags = extendAttrList attrs "cmakeFlags" cmakeFlags;
     postInstall = extendAttrString attrs "postInstall" postInstall;
     postFixup = extendAttrString attrs "postFixup" postFixup;
@@ -54,7 +54,7 @@ let
       sphinx
       #six
       dateutil
-      docutils
+      # docutils
       argparse
       pyyaml
       nose
