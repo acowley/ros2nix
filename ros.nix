@@ -35,24 +35,24 @@ let localPackages = rec {
     extraPackages = {
       turtlesim = import ./turtlesim.nix;
     };
-  } // callPackage ./ros-build-env.nix {} perception.packages);
+  } // callPackage ./ros-build-env.nix {} perception.packageSet);
   comm = callPackage ./kinetic_comm.nix (distroParams // {
     extraPackages = {
       turtlesim = import ./turtlesim.nix;
       inherit (perception.definitions) geometry_msgs;
     };
-  } // callPackage ./ros-build-env.nix {} comm.packages);
+  } // callPackage ./ros-build-env.nix {} comm.packageSet);
   lunar_comm = callPackage ./lunar_comm.nix ({
     extraPackages = {
       turtlesim = import ./turtlesim_lunar.nix;
       inherit (lunar_perception.definitions) geometry_msgs;
     };
-  } // callPackage ./ros-build-env.nix {} lunar_comm.packages);
+  } // callPackage ./ros-build-env.nix {} lunar_comm.packageSet);
   lunar_perception = callPackage ./lunar_perception.nix ({
     extraPackages = {
       turtlesim = import ./turtlesim_lunar.nix;
     };
-  } // callPackage ./ros-build-env.nix {} lunar_perception.packages);
+  } // callPackage ./ros-build-env.nix {} lunar_perception.packageSet);
   # The comm package set extended with Gazebo support
   sim = callPackage ./kinetic_sim.nix (distroParams // {
     extraPackages = {
@@ -73,8 +73,14 @@ let localPackages = rec {
         camera_calibration_parsers pluginlib class_loader nodelet
         bond bondcpp bondpy smclib rosconsole_bridge xmlrpcpp;
     } // localPackages;
-  } // callPackage ./ros-build-env.nix {} sim.packages);
-in if lib.inNixShell then lunar_perception.shell else lunar_perception.packages
+  } // callPackage ./ros-build-env.nix {} sim.packageSet);
+in {
+  inherit lunar_perception lunar_comm;
+  kinetic_comm = comm;
+  kinetic_perception = perception;
+}
+# in if lib.inNixShell then lunar_perception.shell else lunar_perception.packages
+# in lunar_perception.packages
 # in lunar_comm.packages.cmake_modules
 # in lunar_comm.packages.catkin
 # in (callPackage ./ros-build-env.nix {} {}).pyEnv.env

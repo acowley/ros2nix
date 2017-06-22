@@ -28,7 +28,7 @@ mkRosCmakePackage rec {
     cmakeConfigurePhase
   '';
   cmakeFlags = ["-DCMAKE_OSX_DEPLOYMENT_TARGET=" "-DCMAKE_OSX_SYSROOT="];
-  buildInputs = with qt5; [ qtbase makeQtWrapper qmakeHook ];
+  buildInputs = with qt5; [ qtbase qmake ];
   propagatedBuildInputs = [
     cmake
     pkgconfig
@@ -45,6 +45,6 @@ mkRosCmakePackage rec {
   ];
   postInstall = ''
     mkdir -p $out/bin
-    makeQtWrapper $out/lib/turtlesim/turtlesim_node $out/bin/turtlesim_node
+    cp $out/lib/turtlesim/turtlesim_node $out/bin/turtlesim_node
   '';
 }

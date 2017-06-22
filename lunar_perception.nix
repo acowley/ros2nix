@@ -2536,11 +2536,12 @@ let
           ];
         };
     };
-    packages = stdenv.lib.mapAttrs (_:
+    packageSet = stdenv.lib.mapAttrs (_:
     v:
-      stdenv.lib.callPackageWith (deps // packages) v {}) (rosPackageSet // extraPackages);
+      stdenv.lib.callPackageWith (deps // packageSet) v {}) (rosPackageSet // extraPackages);
     in {
-      inherit packages;
+      inherit packageSet;
+      packages = stdenv.lib.attrValues packageSet;
       definitions = rosPackageSet;
       shell = stdenv.mkDerivation {
         name = "rosPackages";
@@ -2548,7 +2549,7 @@ let
           cmake
           pkgconfig
           glib
-        ] ++ stdenv.lib.attrValues packages;
+        ] ++ stdenv.lib.attrValues packageSet;
         src = [];
         shellHook = rosShell;
       };

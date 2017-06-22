@@ -5,7 +5,9 @@
 let
   # setuppy = <nixpkgs/pkgs/development/python-modules/generic/run_setup.py>;
   setuppy = <nixpkgs/pkgs/development/interpreters/python/run_setup.py>;
-  bootstrapped-pip = callPackage (<nixpkgs/pkgs/development/python-modules/bootstrapped-pip>) { };
+  bootstrapped-pip = callPackage (<nixpkgs/pkgs/development/python-modules/bootstrapped-pip>) {
+    inherit (python.pkgs) fetchPypi;
+};
 in
 attrs:
 attrs // {

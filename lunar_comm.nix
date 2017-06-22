@@ -1,4 +1,4 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pkgconfig, rosShell, sbcl, stdenv, tinyxml2, tinyxml-2, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pkgconfig, rosShell, sbcl, stdenv, tinyxml2, tinyxml-2, qt5, ... }@deps:
 let
     rosPackageSet = {
       catkin = { cmake, gtest, pkgconfig, pyEnv, stdenv }:
@@ -1028,11 +1028,12 @@ let
           ];
         };
     };
-    packages = stdenv.lib.mapAttrs (_:
+    packageSet = stdenv.lib.mapAttrs (_:
     v:
-      stdenv.lib.callPackageWith (deps // packages) v {}) (rosPackageSet // extraPackages);
+      stdenv.lib.callPackageWith (deps // packageSet) v {}) (rosPackageSet // extraPackages);
     in {
-      inherit packages;
+      inherit packageSet;
+      packages = stdenv.lib.attrValues packageSet;
       definitions = rosPackageSet;
       shell = stdenv.mkDerivation {
         name = "rosPackages";
@@ -1040,7 +1041,7 @@ let
           cmake
           pkgconfig
           glib
-        ] ++ stdenv.lib.attrValues packages;
+        ] ++ stdenv.lib.attrValues packageSet;
         src = [];
         shellHook = rosShell;
       };

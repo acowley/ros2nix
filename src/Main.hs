@@ -1,10 +1,11 @@
 {-# LANGUAGE FlexibleContexts, OverloadedStrings, QuasiQuotes, TemplateHaskell #-}
 import Control.Lens hiding (argument)
 import Control.Logging (debug, errorL, setLogLevel, withStdoutLogging, LogLevel(..))
-import Control.Monad (filterM)
+import Control.Monad (filterM, join)
 import Data.Bool (bool)
 import Data.Fix (Fix(Fix))
-import Data.List (isSuffixOf)
+import Data.Foldable (traverse_)
+import Data.List (isSuffixOf, isInfixOf)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, mapMaybe, maybeToList)
 import Data.Monoid ((<>))
@@ -289,7 +290,7 @@ letPackageSet :: [Package] -> NExpr -> NExpr
 letPackageSet pkgs =
   mkLets [ NamedVar (mkSelector "rosPackageSet") pkgSet
          , NamedVar
-             (mkSelector "packages")
+             (mkSelector "packageSet")
              (mkApp2 (mkSym "stdenv.lib.mapAttrs")
                      (mkFunction
                         (Param "_")
@@ -298,7 +299,7 @@ letPackageSet pkgs =
                                        (mkSym "stdenv.lib.callPackageWith")
                                        (mkOper2 NUpdate
                                                 (mkSym "deps")
-                                                (mkSym "packages"))
+                                                (mkSym "packageSet"))
                                        (mkSym "v")
                                        (mkNonRecSet []))))
                      (mkOper2 NUpdate (mkSym "rosPackageSet") (mkSym "extraPackages"))) ]
@@ -324,7 +325,10 @@ mkMetaPackage pkgs = mkFunction (ParamSet args (Just "deps")) body'
                     : "extraPackages ? {}" : externalDeps pkgs)
                    (repeat Nothing)
         body' = letPackageSet pkgs $
-                mkNonRecSet [ inherit [StaticKey "packages"]
+                mkNonRecSet [ inherit [StaticKey "packageSet"]
+                            , nixKeyVal "packages"
+                                        (mkApp (mkSym "stdenv.lib.attrValues")
+                                               (mkSym "packageSet"))
                             , nixKeyVal "definitions" (mkSym "rosPackageSet")
                             , nixKeyVal "shell" body ]
         body = mkApp (mkSym "stdenv.mkDerivation") $
@@ -354,10 +358,19 @@ main :: IO ()
 main = withStdoutLogging $
        do -- args <- getArgs
           Opts f out <- execParser opts
+          let cacheFile
+                 | "kinetic_ros_comm" `isInfixOf` f = Just "comm_hash_cache.txt"
+                 | "kinetic_perception" `isInfixOf` f = Just "perception_hash_cache.txt"
+                 | "lunar_ros_comm" `isInfixOf` f = Just "lunar_comm_hash_cache.txt"
+                 | "lunar_perception" `isInfixOf` f = Just "lunar_perception_hash_cache.txt"
+                 | otherwise = Nothing
+          traverse_ (putStrLn . ("Loading cache file "<>)) cacheFile
           -- cache <- loadCache "perception_hash_cache.txt"
           -- cache <- loadCache "comm_hash_cache.txt"
           -- cache <- loadCache "lunar_comm_hash_cache.txt"
-          cache <- loadCache "lunar_perception_hash_cache.txt"
+          -- cache <- loadCache "lunar_perception_hash_cache.txt"
+          cache <- fmap join (traverse loadCache cacheFile)
+
           maybe (putStrLn "No hash cache available")
                 (const $ putStrLn "Using hash cache")
                 cache
