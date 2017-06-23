@@ -27,7 +27,7 @@ mkRosCmakePackage rec {
   configurePhase = ''
     cmakeConfigurePhase
   '';
-  cmakeFlags = ["-DCMAKE_OSX_DEPLOYMENT_TARGET=" "-DCMAKE_OSX_SYSROOT="];
+
   buildInputs = with qt5; [ qtbase qmake ];
   propagatedBuildInputs = [
     cmake
@@ -42,9 +42,14 @@ mkRosCmakePackage rec {
     rosconsole
     roscpp
     std_srvs
+    qt5.qtbase
   ];
+
+  # NOTE: You may need to run the executable on macOS like so,
+  # DYLD_FRAMEWORK_PATH=/System/Library/Frameworks rosrun turtlesim turtlesim_node
+  # See https://github.com/NixOS/nixpkgs/issues/24693#issuecomment-310737377
+  # for notes on improving this situation.
   postInstall = ''
     mkdir -p $out/bin
-    cp $out/lib/turtlesim/turtlesim_node $out/bin/turtlesim_node
   '';
 }
