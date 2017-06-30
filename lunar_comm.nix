@@ -1,4 +1,4 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pkgconfig, rosShell, sbcl, stdenv, tinyxml2, tinyxml-2, qt5, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pkgconfig, rosShell, sbcl, stdenv, tinyxml2, tinyxml-2, qtbase, qmake, ... }@deps:
 let
     rosPackageSet = {
       catkin = { cmake, gtest, pkgconfig, pyEnv, stdenv }:

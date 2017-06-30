@@ -48,7 +48,7 @@ let localPackages = rec {
       inherit (lunar_perception.definitions) geometry_msgs;
     };
   } // callPackage ./ros-build-env.nix {} lunar_comm.packageSet);
-  lunar_perception = callPackage ./lunar_perception.nix ({
+  lunar_perception = qt56.callPackage ./lunar_perception.nix ({
     extraPackages = {
       turtlesim = import ./turtlesim_lunar.nix;
     };

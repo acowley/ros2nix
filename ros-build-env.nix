@@ -80,7 +80,8 @@ let
       vcstools
       #pyside
       defusedxml
-      (pygraphviz.override { doCheck = false; })
+      pygraphviz
+      #(pygraphviz.override { doCheck = false; })
       #(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })
     ];
   };

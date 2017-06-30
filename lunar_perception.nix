@@ -1,4 +1,4 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, poco, rosShell, sbcl, stdenv, tinyxml, tinyxml2, tinyxml-2, uuid, qt5, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, poco, rosShell, sbcl, stdenv, tinyxml, tinyxml2, tinyxml-2, uuid, qtbase, qmake, ... }@deps:
 let
     rosPackageSet = {
       actionlib = { actionlib_msgs, boost, catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, rospy, rostest, std_msgs, stdenv }:

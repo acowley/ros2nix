@@ -2,7 +2,7 @@
 , stdenv, fetchurl, geometry_msgs, message_generation, message_runtime
 , rosconsole, roscpp, roscpp_serialization, roslib, rostime, std_msgs, std_srvs
 , mkRosCmakePackage
-, qt5
+, qtbase, qmake
 }:
 mkRosCmakePackage rec {
   name = "turtlesim";
@@ -22,13 +22,13 @@ mkRosCmakePackage rec {
   preConfigure = ''
     sed 's/cmake_minimum_required(VERSION 2.8.3)/cmake_minimum_required(VERSION 3.0.0)/' -i ./CMakeLists.txt
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
-    export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -F${qt5.qtbase}/lib"
+    export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -F${qtbase}/lib"
   '';
   configurePhase = ''
     cmakeConfigurePhase
   '';
 
-  buildInputs = with qt5; [ qtbase qmake ];
+  buildInputs = [ qtbase qmake ];
   propagatedBuildInputs = [
     cmake
     pkgconfig
@@ -42,7 +42,7 @@ mkRosCmakePackage rec {
     rosconsole
     roscpp
     std_srvs
-    qt5.qtbase
+    qtbase
   ];
 
   # NOTE: You may need to run the executable on macOS like so,
