@@ -1,16 +1,14 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, poco, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, tree, graphviz, opencv3, pango, pkgconfig, rosShell, sbcl, stdenv, tinyxml2, tinyxml-2, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, gtest, libobjc, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pkgconfig, poco, rosShell, sbcl, graphviz, stdenv, tinyxml-2, ... }@deps:
 let
     rosPackageSet = {
       catkin = { cmake, gtest, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "catkin";
           version = "0.7.8-0";
           src = fetchurl {
             url = "https://github.com/ros-gbp/catkin-release/archive/release/lunar/catkin/0.7.8-0.tar.gz";
             sha256 = "1f832r7hc1nd1ss032m9fhpa61vg0nbkwhy78x230ah47gvysmr0";
-    };
-    buildInputs = [ tree ];
+          };
           propagatedBuildInputs = [
             cmake
             pkgconfig
@@ -18,7 +16,7 @@ let
             pyEnv
           ];
           patchPhase = ''
-            sed -i 's|#!@PYTHON_EXECUTABLE@|#!${pyEnv.python.passthru.interpreter}|' ./cmake/templates/_setup_util.py.in
+            sed -i 's|#!@PYTHON_EXECUTABLE@|#!/usr/bin/env ${pyEnv.interpreter}|' ./cmake/templates/_setup_util.py.in
             sed -i 's/PYTHON_EXECUTABLE/SHELL/' ./cmake/catkin_package_xml.cmake
             sed -i 's|#!/usr/bin/env bash|#!${stdenv.shell}|' ./cmake/templates/setup.bash.in
             sed -i 's|#!/usr/bin/env sh|#!${stdenv.shell}|' ./cmake/templates/setup.sh.in
@@ -41,8 +39,7 @@ let
           ];
         };
       gencpp = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "gencpp";
           version = "0.5.5-0";
           src = fetchurl {
@@ -62,8 +59,7 @@ let
           '';
         };
       geneus = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "geneus";
           version = "2.2.6-0";
           src = fetchurl {
@@ -83,8 +79,7 @@ let
           '';
         };
       genlisp = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "genlisp";
           version = "0.4.16-0";
           src = fetchurl {
@@ -104,8 +99,7 @@ let
           '';
         };
       genmsg = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "genmsg";
           version = "0.5.9-0";
           src = fetchurl {
@@ -124,8 +118,7 @@ let
           '';
         };
       gennodejs = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "gennodejs";
           version = "2.0.1-0";
           src = fetchurl {
@@ -142,8 +135,7 @@ let
           ];
         };
       genpy = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "genpy";
           version = "0.6.7-0";
           src = fetchurl {
@@ -169,7 +161,7 @@ let
           src = fetchurl {
             url = "https://github.com/ros-gbp/message_generation-release/archive/release/lunar/message_generation/0.4.0-0.tar.gz";
             sha256 = "1y6w0i9ld0wj1kksrnbjg8n57r69jj9zj78lymsq55abzhqmbpqh";
-    };
+          };
           propagatedBuildInputs = [
             cmake
             pkgconfig
@@ -352,8 +344,7 @@ let
           ];
         };
       roslib = { boost, catkin, cmake, gtest, pkgconfig, pyEnv, rospack, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "roslib";
           version = "1.14.2-0";
           src = fetchurl {
@@ -387,8 +378,7 @@ let
           ];
         };
       rosunit = { catkin, cmake, gtest, pkgconfig, pyEnv, roslib, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "rosunit";
           version = "1.14.2-0";
           src = fetchurl {
@@ -405,8 +395,7 @@ let
           ];
         };
       message_filters = { boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosconsole, roscpp, rostest, rosunit, stdenv, xmlrpcpp }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "message_filters";
           version = "1.13.5-0";
           src = fetchurl {
@@ -609,8 +598,7 @@ let
           ];
         };
       roslz4 = { catkin, cmake, gtest, lz4, pkgconfig, pyEnv, stdenv }:
-  # mkRosPythonPackage {
-      mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "roslz4";
           version = "4-1.13.5-0";
           src = fetchurl {
@@ -761,8 +749,7 @@ let
           ];
         };
       rostest = { boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, roslaunch, rosmaster, rospy, rosunit, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "rostest";
           version = "1.13.5-0";
           src = fetchurl {

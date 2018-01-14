@@ -112,7 +112,7 @@ nixify pkg = mkFunction (ParamSet args Nothing) body
                        "pcl_ros" -> pclDarwinDeps ++ pclRosDeps
                        "class_loader" -> ["console-bridge", "poco", "boost"]
                        "pluginlib" -> ["class_loader", "rosconsole", "roslib"]
-                       "rospack" -> ["tinyxml-2"]
+                       "actionlib" -> ["actionlib_msgs", "roscpp", "rostest"]
                        _ -> []
         extraInputs = case view localName pkg of
                         "image_view" ->
@@ -144,8 +144,9 @@ nixify pkg = mkFunction (ParamSet args Nothing) body
           case view localName pkg of
             "catkin" ->
               [ nixKeyVal "patchPhase" $
-                mkIndented [ Plain "sed -i 's|#!@PYTHON_EXECUTABLE@|#!"
-                           , Antiquoted (mkSym "pyEnv.python.passthru.interpreter")
+                mkIndented [ Plain "sed -i 's|#!@PYTHON_EXECUTABLE@|#!/usr/bin/env "
+                           -- , Antiquoted (mkSym "pyEnv.python.passthru.interpreter")
+                           , Antiquoted (mkSym "pyEnv.interpreter")
                            , Plain "|' ./cmake/templates/_setup_util.py.in\n"
                            , Plain "sed -i 's/PYTHON_EXECUTABLE/SHELL/' ./cmake/catkin_package_xml.cmake\n"
                            , Plain "sed -i 's|#!/usr/bin/env bash|#!"
@@ -285,7 +286,13 @@ getDependencies :: FilePath -> IO [Text]
 getDependencies = fmap (map T.pack . S.toList . S.fromList)
                 . runX . parseDependencies
 
--- FIXME: overide roslz4, catkin, gencpp, genmsg, geneus, gennodejs, genlisp, genpy, rosunit, message_filters, rostest, pluginlib, roslib, sensor_msgs to mkRosCmakePackage. Remove opencv3 dep from cv_bridge
+-- This is a challenge: every package has a CMakeLists.txt. If we
+-- build as a python package, cmake modules do not get copied into the
+-- store. But if we do not build as a python package, then the
+-- resulting python scripts can not find dependencies. We will try to
+-- build Python packages using cmake after disabling the catkin python
+-- setup logic after we have built and installed them as nixpkgs
+-- Python packages.
 getBuildType :: FilePath -> IO BuildType
 getBuildType = fmap (bool CMake Python) . doesFileExist . (</> "setup.py")
 
@@ -326,7 +333,7 @@ mkMetaPackage pkgs = mkFunction (ParamSet args (Just "deps")) body'
                zip ("stdenv" : "fetchurl" : "glib" : "pango" : "gdk_pixbuf"
                     : "atk" : "libobjc" : "Cocoa" : "cmake" : "opencv3"
                     : "mkRosPythonPackage" : "mkRosCmakePackage" : "rosShell"
-                    : "extraPackages ? {}" : externalDeps pkgs)
+                    : "poco" : "extraPackages ? {}" : externalDeps pkgs)
                    (repeat Nothing)
         body' = letPackageSet pkgs $
                 mkNonRecSet [ inherit [StaticKey "packageSet"]

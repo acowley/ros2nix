@@ -1,7 +1,7 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, poco, eigen, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, rosShell, sbcl, stdenv, tinyxml2, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, poco, rosShell, sbcl, stdenv, tinyxml-2, ... }@deps:
 let
     rosPackageSet = {
-      actionlib = { catkin, cmake, gtest, message_generation, pkgconfig, pyEnv, stdenv }:
+      actionlib = { actionlib_msgs, catkin, cmake, gtest, message_generation, pkgconfig, pyEnv, roscpp, rostest, stdenv }:
       mkRosPythonPackage {
           name = "actionlib";
           version = "1.11.11-0";
@@ -16,6 +16,9 @@ let
             pyEnv
             catkin
             message_generation
+            actionlib_msgs
+            roscpp
+            rostest
           ];
         };
       angles = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
@@ -138,13 +141,13 @@ let
             pyEnv
           ];
           patchPhase = ''
-            sed -i 's|#!@PYTHON_EXECUTABLE@|#!${pyEnv.python.passthru.interpreter}|' ./cmake/templates/_setup_util.py.in
+            sed -i 's|#!@PYTHON_EXECUTABLE@|#!/usr/bin/env ${pyEnv.interpreter}|' ./cmake/templates/_setup_util.py.in
             sed -i 's/PYTHON_EXECUTABLE/SHELL/' ./cmake/catkin_package_xml.cmake
             sed -i 's|#!/usr/bin/env bash|#!${stdenv.shell}|' ./cmake/templates/setup.bash.in
             sed -i 's|#!/usr/bin/env sh|#!${stdenv.shell}|' ./cmake/templates/setup.sh.in
           '';
         };
-      class_loader = { catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, console-bridge, poco, boost }:
+      class_loader = { boost, catkin, cmake, cmake_modules, console-bridge, gtest, pkgconfig, poco, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "class_loader";
           version = "0.3.8-0";
@@ -154,7 +157,6 @@ let
           };
           propagatedBuildInputs = [
             cmake
-            boost
             pkgconfig
             gtest
             pyEnv
@@ -162,6 +164,7 @@ let
             cmake_modules
             console-bridge
             poco
+            boost
           ];
         };
       cmake_modules = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
@@ -284,8 +287,7 @@ let
           ];
         };
       sensor_msgs = { catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      mkRosPythonPackage {
           name = "sensor_msgs";
           version = "1.12.5-0";
           src = fetchurl {
@@ -1526,9 +1528,8 @@ let
             pcl_ros
           ];
         };
-      pluginlib = { catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, class_loader, rosconsole, roslib }:
-  # mkRosPythonPackage {
-  mkRosCmakePackage {
+      pluginlib = { catkin, class_loader, cmake, cmake_modules, gtest, pkgconfig, pyEnv, rosconsole, roslib, stdenv }:
+      mkRosPythonPackage {
           name = "pluginlib";
           version = "1.11.2-0";
           src = fetchurl {
@@ -2391,7 +2392,7 @@ let
             std_srvs
           ];
         };
-      rospack = { boost, catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, tinyxml2 }:
+      rospack = { boost, catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, tinyxml-2 }:
       mkRosCmakePackage {
           name = "rospack";
           version = "2.4.3-0";
@@ -2409,7 +2410,7 @@ let
             cmake_modules
             gtest
             pkgconfig
-            tinyxml2
+            tinyxml-2
           ];
         };
       std_msgs = { catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, stdenv }:
@@ -2441,11 +2442,11 @@ let
           propagatedBuildInputs = [
             cmake
             pkgconfig
-            pyEnv
             gtest
+            pyEnv
             boost
             catkin
-            # opencv3
+            opencv3
             rosconsole
             sensor_msgs
           ];

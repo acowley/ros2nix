@@ -1,4 +1,4 @@
-{ stdenv, callPackage, fetchurl, python27, python27Packages
+{ stdenv, callPackage, fetchurl, python27, rosPython
 , ensureNewerSourcesHook, makeWrapper, unzip
 }:
 let
@@ -47,8 +47,35 @@ let
     postInstall = extendAttrString attrs "postInstall" postInstall;
     postFixup = extendAttrString attrs "postFixup" postFixup;
   };
+
+  # ROS packages (using catkin) that are primarily Python will
+  # sometimes have non-zero CMake aspects like defining a CMake module for
+  # the use of downstream packages. What we can do is disable the catkin
+  # python setup logic, and run a separate configure-build-install
+  # sequence driven by cmake *after* building and installing the Python
+  # package.
+  rosPythonCmakeFixup = attrs: attrs // {
+    postInstall = extendAttrString attrs "postInstall" ''
+      pushd .
+      cmakeConfigurePhase
+      make
+      make install
+      popd
+    '';
+    patchPhase = extendAttrString attrs "patchPhase" ''
+      if [ -f ./CMakeLists.txt ]; then
+        sed '/catkin_python_setup()/d' -i ./CMakeLists.txt
+      fi
+    '';
+  };
+
+  # Warning: pulling numpy (or something that depends on it, like
+  # matplotlib) into this environment can cause problems down the road. In
+  # particular, I had conflicts that were I think due to opencv3's
+  # optional use of numpy.
   pyEnv = rosPython.withPackages (ps: with ps; [
-      numpy
+      # numpy
+      # matplotlib
       setuptools
       sphinx
       #six
@@ -67,7 +94,6 @@ let
       catkin_pkg
       bloom
       empy
-      matplotlib
       pillow
       pydot
       paramiko
@@ -75,31 +101,15 @@ let
       netifaces
       mock
       psutil
-      # pyqt4
       vcstools
       defusedxml
       pygraphviz
 ]);
-  rosPython = python27.override {
-    packageOverrides = self: super: {
-      rosdep = self.callPackage ./python/rosdep.nix {};
-      rosinstall_generator = self.callPackage ./python/rosinstall_generator.nix {};
-      catkin_pkg = super.callPackage ./python/catkin_pkg.nix {};
-      catkin_tools = self.callPackage ./python/catkin_tools.nix {};
-      osrf-pycommon = super.callPackage ./python/osrf-pycommon.nix {};
-      rospkg = super.callPackage ./python/rospkg.nix {};
-      rosdistro = self.callPackage ./python/rosdistro.nix {};
-      wstool = super.callPackage ./python/wstool.nix {};
-      rosinstall = self.callPackage ./python/rosinstall.nix {};
-      empy = super.callPackage ./python/empy.nix {};
-      bloom = super.callPackage ./python/bloom.nix {};
-      vcstools = super.callPackage ./python/vcstools.nix {};
-      sip = super.callPackage ./sip.nix {};
-    };
-  };
 in rosPackageSet: {
   inherit pyEnv;
-  mkRosPythonPackage = attrs: rosPython.pkgs.buildPythonPackage (rosBuildHooks attrs);
+  mkRosPythonPackage = attrs:
+    rosPython.pkgs.buildPythonPackage
+      (rosPythonCmakeFixup (rosBuildHooks attrs));
   mkRosCmakePackage = attrs: stdenv.mkDerivation (rosBuildHooks attrs);
   rosShell = ''
     export ROS_MASTER_URI="http://localhost:11311"

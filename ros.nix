@@ -13,18 +13,26 @@ ov = self: super: {
   flann = super.callPackage ./flann.nix {};
   pythonPackages = self.rosPython.pkgs;
   python27Packages = self.rosPython.pkgs;
+
+  # python27 = super.python.override {
+  #   packageOverrides = selfp: superp: {
+  #     inherit (self.rosPython.pkgs) numpy;
+  #   };
+  # };
+
   opencv3 = super.opencv3.override { pythonPackages = self.rosPython.pkgs; };
   rosPython = super.python27.override {
     packageOverrides = self: super: {
-      rosdep = self.callPackage ./python/rosdep.nix {};
-      rosinstall_generator = self.callPackage ./python/rosinstall_generator.nix {};
+      rosdep = super.callPackage ./python/rosdep.nix {};
+      rosinstall_generator = super.callPackage ./python/rosinstall_generator.nix {};
+      catkin_tools = super.callPackage ./python/catkin_tools.nix {};
+      rosdistro = super.callPackage ./python/rosdistro.nix {};
+      rosinstall = super.callPackage ./python/rosinstall.nix {};
+
       catkin_pkg = super.callPackage ./python/catkin_pkg.nix {};
-      catkin_tools = self.callPackage ./python/catkin_tools.nix {};
       osrf-pycommon = super.callPackage ./python/osrf-pycommon.nix {};
       rospkg = super.callPackage ./python/rospkg.nix {};
-      rosdistro = self.callPackage ./python/rosdistro.nix {};
       wstool = super.callPackage ./python/wstool.nix {};
-      rosinstall = self.callPackage ./python/rosinstall.nix {};
       empy = super.callPackage ./python/empy.nix {};
       bloom = super.callPackage ./python/bloom.nix {};
       vcstools = super.callPackage ./python/vcstools.nix {};
@@ -37,12 +45,15 @@ nixpkgs = (import ((import <nixpkgs> { }).fetchFromGitHub {
   repo = "nixpkgs";
   rev = "b17ec549a14a4b3fb8cdfff914afddd65fee942e";
   sha256 = "0x969dk2690bd7hvyn3yykws6mnn434a88l7z2xsn4dk9bvi5kp2";
+  # rev = "d982c61f1afcac2f7f99fc9740c031c1bc02e456";
+  # sha256 = "0x969dk2690bd7hvyn3y88886mnn434a88l7z2xsn4dk9bvi5kp2";
 }) {
     overlays = [ov];
   }); in
 # nixpkgs = import <nixpkgs> { overlays = [ov]; }; in
 with nixpkgs;
-let localPackages = rec {
+let ros-build-env = callPackage ./ros-build-env.nix {};
+localPackages = rec {
       console-bridge = import ./console-bridge.nix;
       poco = import ./poco.nix;
       collada-dom = import ./collada-dom.nix;
@@ -62,24 +73,25 @@ let localPackages = rec {
     extraPackages = {
       turtlesim = import ./turtlesim.nix;
     };
-  } // callPackage ./ros-build-env.nix {} perception.packageSet);
+  } // ros-build-env perception.packageSet);
   comm = callPackage ./kinetic_comm.nix (distroParams // {
     extraPackages = {
       turtlesim = import ./turtlesim.nix;
       inherit (perception.definitions) geometry_msgs;
     };
-  } // callPackage ./ros-build-env.nix {} comm.packageSet);
+  } // ros-build-env comm.packageSet);
   lunar_comm = callPackage ./lunar_comm.nix ({
     extraPackages = {
     # turtlesim = import ./turtlesim_lunar.nix;
     inherit (lunar_perception.definitions) geometry_msgs sensor_msgs tf2_msgs nav_msgs actionlib_msgs cv_bridge image_transport pluginlib class_loader tf2 tf2_ros actionlib tf2_py angles tf;
+    # inherit (lunar_perception.definitions) tf2_msgs nav_msgs actionlib_msgs image_transport pluginlib class_loader tf2 tf2_ros actionlib tf2_py angles tf;
     };
-  } // callPackage ./ros-build-env.nix {} lunar_comm.packageSet);
+  } // ros-build-env lunar_comm.packageSet);
   lunar_perception = qt56.callPackage ./lunar_perception.nix ({
     extraPackages = {
       turtlesim = import ./turtlesim_lunar.nix;
     };
-  } // callPackage ./ros-build-env.nix {} lunar_perception.packageSet);
+  } // ros-build-env lunar_perception.packageSet);
   # The comm package set extended with Gazebo support
   sim = callPackage ./kinetic_sim.nix (distroParams // {
     extraPackages = {
@@ -100,7 +112,7 @@ let localPackages = rec {
         camera_calibration_parsers pluginlib class_loader nodelet
         bond bondcpp bondpy smclib rosconsole_bridge xmlrpcpp;
     } // localPackages;
-  } // callPackage ./ros-build-env.nix {} sim.packageSet);
+  } // ros-build-env sim.packageSet);
 in {
   inherit lunar_perception lunar_comm;
   kinetic_comm = comm;
@@ -110,6 +122,6 @@ in {
 # in lunar_perception.packages
 # in lunar_comm.packages.cmake_modules
 # in lunar_comm.packages.catkin
-# in (callPackage ./ros-build-env.nix {} {}).pyEnv.env
+# in (ros-build-env {}).pyEnv.env
 # in if lib.inNixShell then sim.shell else sim.packages
 # in if lib.inNixShell then perception.shell else perception.packages

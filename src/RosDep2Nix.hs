@@ -34,7 +34,8 @@ renamings = aliases <> fromEnv <> notUsed
                   , ("libv4l-dev", "libv4l")
                   , ("libvtk-qt", "vtkWithQt4")
                   , ("protobuf-dev", "protobuf")
-                  , ("yaml-cpp", "libyamlcpp") ]
+                  , ("yaml-cpp", "libyamlcpp")
+                  , ("tinyxml2", "tinyxml-2") ]
 
         -- Handled by the pyEnv used for ROS builds
         fromEnv = fromList $ map (,"")
