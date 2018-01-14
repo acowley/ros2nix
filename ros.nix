@@ -1,8 +1,6 @@
-# { nixpkgs ? (import ./nixpkgs { overlays = [import ./ros-support-overlay.nix]; }) }:
-# with nixpkgs;
-# with (import <nixpkgs> { overlays = [import ./ros-support-overlay.nix]; });
 let
-  ov = self: super: {
+ov = self: super: {
+  boost = super.boost163;
   console-bridge = super.callPackage ./console-bridge.nix {};
   poco = super.callPackage ./poco.nix {};
   collada-dom = super.callPackage ./collada-dom.nix {};
@@ -13,8 +11,36 @@ let
   inherit (super.darwin.apple_sdk.frameworks) Cocoa;
   protobuf = super.protobuf3_1;
   flann = super.callPackage ./flann.nix {};
+  pythonPackages = self.rosPython.pkgs;
+  python27Packages = self.rosPython.pkgs;
+  opencv3 = super.opencv3.override { pythonPackages = self.rosPython.pkgs; };
+  rosPython = super.python27.override {
+    packageOverrides = self: super: {
+      rosdep = self.callPackage ./python/rosdep.nix {};
+      rosinstall_generator = self.callPackage ./python/rosinstall_generator.nix {};
+      catkin_pkg = super.callPackage ./python/catkin_pkg.nix {};
+      catkin_tools = self.callPackage ./python/catkin_tools.nix {};
+      osrf-pycommon = super.callPackage ./python/osrf-pycommon.nix {};
+      rospkg = super.callPackage ./python/rospkg.nix {};
+      rosdistro = self.callPackage ./python/rosdistro.nix {};
+      wstool = super.callPackage ./python/wstool.nix {};
+      rosinstall = self.callPackage ./python/rosinstall.nix {};
+      empy = super.callPackage ./python/empy.nix {};
+      bloom = super.callPackage ./python/bloom.nix {};
+      vcstools = super.callPackage ./python/vcstools.nix {};
+      sip = super.callPackage ./sip.nix {};
+    };
+  };
 };
-nixpkgs = import <nixpkgs> { overlays = [ov]; }; in
+nixpkgs = (import ((import <nixpkgs> { }).fetchFromGitHub {
+  owner = "NixOS";
+  repo = "nixpkgs";
+  rev = "b17ec549a14a4b3fb8cdfff914afddd65fee942e";
+  sha256 = "0x969dk2690bd7hvyn3yykws6mnn434a88l7z2xsn4dk9bvi5kp2";
+}) {
+    overlays = [ov];
+  }); in
+# nixpkgs = import <nixpkgs> { overlays = [ov]; }; in
 with nixpkgs;
 let localPackages = rec {
       console-bridge = import ./console-bridge.nix;
@@ -24,7 +50,8 @@ let localPackages = rec {
       urdfdom = import ./urdfdom.nix;
     };
   distroParams = {
-    inherit (nixpkgs) boost opencv3 qt5;
+    inherit (nixpkgs) opencv3 qt5;
+    boost = nixpkgs.boost164;
     uuid = if nixpkgs ? uuid then nixpkgs.uuid else null;
     inherit (localPackages) console-bridge poco;
     inherit (darwin) libobjc;
@@ -44,8 +71,8 @@ let localPackages = rec {
   } // callPackage ./ros-build-env.nix {} comm.packageSet);
   lunar_comm = callPackage ./lunar_comm.nix ({
     extraPackages = {
-      turtlesim = import ./turtlesim_lunar.nix;
-      inherit (lunar_perception.definitions) geometry_msgs;
+    # turtlesim = import ./turtlesim_lunar.nix;
+    inherit (lunar_perception.definitions) geometry_msgs sensor_msgs tf2_msgs nav_msgs actionlib_msgs cv_bridge image_transport pluginlib class_loader tf2 tf2_ros actionlib tf2_py angles tf;
     };
   } // callPackage ./ros-build-env.nix {} lunar_comm.packageSet);
   lunar_perception = qt56.callPackage ./lunar_perception.nix ({

@@ -35,7 +35,19 @@ want to use a minimal set of core packages, consider using
 
 # What it's doing
 
-- The `ros-distro.nix` file uses ROS tooling to obtain a `.rosinstall` file for the desired metapackage/variant (in the above examples, we referred to the `perception` and `comm` variants of the ROS `kinetic` distribution).
+- The `ros-distro.nix` file uses ROS tooling to obtain a `.rosinstall` file for the desired metapackage/variant (in the above examples, we referred to the `perception` and `comm` variants of the ROS `kinetic` distribution). Usage examples:
+
+```
+nix-build --no-out-link ros-distro.nix -A lunar.ros_comm-src
+```
+
+or
+
+```
+nix-build --no-out-link ros-distro.nix -A lunar.perception-src
+```
+
+Then look for the lone `.rosinstall` file in the nix store directory returned by `nix-build`.
 
 - The `ros2nix` program (called with `stack exec` above) generates derivations for all the packages that make up the ROS distribution. In the example, we output those definitions to the file `kinetic_perception.nix`.
 

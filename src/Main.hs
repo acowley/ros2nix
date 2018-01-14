@@ -110,6 +110,9 @@ nixify pkg = mkFunction (ParamSet args Nothing) body
         extraDeps = case view localName pkg of
                        "image_view" -> ["glib", "pango"]
                        "pcl_ros" -> pclDarwinDeps ++ pclRosDeps
+                       "class_loader" -> ["console-bridge", "poco", "boost"]
+                       "pluginlib" -> ["class_loader", "rosconsole", "roslib"]
+                       "rospack" -> ["tinyxml-2"]
                        _ -> []
         extraInputs = case view localName pkg of
                         "image_view" ->
@@ -282,6 +285,7 @@ getDependencies :: FilePath -> IO [Text]
 getDependencies = fmap (map T.pack . S.toList . S.fromList)
                 . runX . parseDependencies
 
+-- FIXME: overide roslz4, catkin, gencpp, genmsg, geneus, gennodejs, genlisp, genpy, rosunit, message_filters, rostest, pluginlib, roslib, sensor_msgs to mkRosCmakePackage. Remove opencv3 dep from cv_bridge
 getBuildType :: FilePath -> IO BuildType
 getBuildType = fmap (bool CMake Python) . doesFileExist . (</> "setup.py")
 
@@ -341,7 +345,7 @@ mkMetaPackage pkgs = mkFunction (ParamSet args (Just "deps")) body'
         deps' = mkOper2 NConcat
                         (mkList $ map mkSym ["cmake", "pkgconfig", "glib"])
                         (mkApp (mkSym "stdenv.lib.attrValues")
-                               (mkSym "packages"))
+                               (mkSym "packageSet"))
 
 data Opts = Opts { _rosinstall :: FilePath
                  , _outFile :: Maybe FilePath }

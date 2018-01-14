@@ -1,26 +1,22 @@
 with (import <nixpkgs> {}).pkgs;
 let
-  basePythonPackages = python27Packages;
-  sip = callPackage ./sip.nix {
-      inherit (basePythonPackages) buildPythonPackage;
-  };
-  rosLocalPythonPackages = callPackage "${callPackage ./ros-python-packages.nix {}}/ros-python-packages.nix" {
-    inherit (basePythonPackages) buildPythonPackage;
-    inherit (pkgs) fetchurl;
-    extradeps = { inherit (basePythonPackages) setuptools; };
-  };
-  rosPythonPackages = basePythonPackages // rosLocalPythonPackages;
   rosDistributions = {
     indigo = "2014-07-22-indigo";
     jade = "2015-05-23-jade";
     kinetic = "2016-05-23-kinetic";
     lunar = "2017-05-23-lunar";
   };
-  srcPyEnv = python27.buildEnv.override {
-    extraLibs = with rosPythonPackages; [
-      setuptools rosdep rosinstall-generator wstool rosinstall
-      catkin_tools catkin_pkg pyyaml rospkg rosdistro
-    ];
+  rosPython = python27.override {
+    packageOverrides = self: super: {
+      rosdep = self.callPackage ./python/rosdep.nix {};
+      rosinstall_generator = self.callPackage ./python/rosinstall_generator.nix {};
+      catkin_pkg = super.callPackage ./python/catkin_pkg.nix {};
+      catkin_tools = self.callPackage ./python/catkin_tools.nix {};
+      osrf-pycommon = super.callPackage ./python/osrf-pycommon.nix {};
+      rospkg = super.callPackage ./python/rospkg.nix {};
+      rosdistro = self.callPackage ./python/rosdistro.nix {};
+      sip = super.callPackage ./sip.nix {};
+    };
   };
 
   # Builds a rosinstall file for a particular variant of a given
@@ -30,11 +26,10 @@ let
       name = "ros-"+distro+"-"+variant+"-src";
       version = lib.getAttr distro rosDistributions;
       srcs = [];
-      buildInputs = [ srcPyEnv cacert which ];
+      buildInputs = [rosPython.pkgs.rosinstall_generator cacert ];
       buildCommand = ''
         source $stdenv/setup
         mkdir -p $out
-        which python
         export SSL_CERT_FILE="${cacert}/etc/ssl/certs/ca-bundle.crt"
         rosinstall_generator ${variant} --rosdistro ${distro} --deps --tar > $out/${distro}_${variant}.rosinstall
       '';
@@ -56,4 +51,6 @@ in
   jade = mkDistro "jade";
   kinetic = mkDistro "kinetic";
   lunar = mkDistro "lunar";
+  rospy = rosLocalPythonPackages;
+  inherit rosPython;
 }

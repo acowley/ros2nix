@@ -9,7 +9,7 @@ let
     "-DPYTHON_EXECUTABLE=${pyEnv}/bin/python"
   ];
   postInstall = ''
-    pushd ..
+    # pushd ..
     if [ -f 'package.xml' ]; then
       cp package.xml ''$out
     fi
@@ -22,7 +22,7 @@ let
     if [ -d 'env-hooks' ]; then
       cp -r env-hooks ''$out
     fi
-    popd
+    # popd
   '';
   postFixup = ''
     find "''$prefix" -type f -perm -0100 | while read f; do
@@ -47,8 +47,7 @@ let
     postInstall = extendAttrString attrs "postInstall" postInstall;
     postFixup = extendAttrString attrs "postFixup" postFixup;
   };
-  pyEnv = python27.buildEnv.override {
-    extraLibs = with pyPackages; [
+  pyEnv = rosPython.withPackages (ps: with ps; [
       numpy
       setuptools
       sphinx
@@ -61,7 +60,7 @@ let
       rosdep
       rospkg
       rosdistro
-      rosinstall-generator
+      rosinstall_generator
       wstool
       rosinstall
       catkin_tools
@@ -69,40 +68,38 @@ let
       bloom
       empy
       matplotlib
-      (pillow.override { doCheck = false; })
+      pillow
       pydot
       paramiko
       coverage
       netifaces
       mock
       psutil
-      pyqt4
+      # pyqt4
       vcstools
-      #pyside
       defusedxml
       pygraphviz
-      #(pygraphviz.override { doCheck = false; })
-      #(callPackage ./sip.nix { inherit fetchurl python buildPythonPackage; })
-    ];
+]);
+  rosPython = python27.override {
+    packageOverrides = self: super: {
+      rosdep = self.callPackage ./python/rosdep.nix {};
+      rosinstall_generator = self.callPackage ./python/rosinstall_generator.nix {};
+      catkin_pkg = super.callPackage ./python/catkin_pkg.nix {};
+      catkin_tools = self.callPackage ./python/catkin_tools.nix {};
+      osrf-pycommon = super.callPackage ./python/osrf-pycommon.nix {};
+      rospkg = super.callPackage ./python/rospkg.nix {};
+      rosdistro = self.callPackage ./python/rosdistro.nix {};
+      wstool = super.callPackage ./python/wstool.nix {};
+      rosinstall = self.callPackage ./python/rosinstall.nix {};
+      empy = super.callPackage ./python/empy.nix {};
+      bloom = super.callPackage ./python/bloom.nix {};
+      vcstools = super.callPackage ./python/vcstools.nix {};
+      sip = super.callPackage ./sip.nix {};
+    };
   };
-  pyPackages = python27Packages.override (_: {
-    python = pyEnv.python;
-  }) // callPackage "${callPackage ./ros-python-packages.nix {}}/ros-python-packages.nix" {
-    inherit fetchurl;
-    inherit (pyPackages) buildPythonPackage;
-    extradeps = { inherit (pyPackages) setuptools; };
-  };
-  pyCallPackage = stdenv.lib.callPackageWith {
-    inherit (pyPackages) python setuptools wrapPython;
-    inherit (stdenv) lib;
-    inherit ensureNewerSourcesHook stdenv fetchurl makeWrapper unzip;
-    callPackage = pyCallPackage;
-  };
-  pyBuild = pyCallPackage ./python-install.nix {};
 in rosPackageSet: {
   inherit pyEnv;
-  mkRosPythonPackage = attrs:
-    stdenv.mkDerivation (pyBuild (rosBuildHooks attrs));
+  mkRosPythonPackage = attrs: rosPython.pkgs.buildPythonPackage (rosBuildHooks attrs);
   mkRosCmakePackage = attrs: stdenv.mkDerivation (rosBuildHooks attrs);
   rosShell = ''
     export ROS_MASTER_URI="http://localhost:11311"

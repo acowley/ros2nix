@@ -1,28 +1,21 @@
-{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, eigen, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, poco, rosShell, sbcl, stdenv, tinyxml, tinyxml2, tinyxml-2, uuid, qtbase, qmake, ... }@deps:
+{ Cocoa, apr, atk, boost, bzip2, cmake, console-bridge, poco, eigen, extraPackages ? {}, fetchurl, gdk_pixbuf, glib, graphviz, gtest, gtk2, libobjc, libogg, libtheora, libyamlcpp, log4cxx, lz4, mkRosCmakePackage, mkRosPythonPackage, opencv3, pango, pcl, pkgconfig, rosShell, sbcl, stdenv, tinyxml2, ... }@deps:
 let
     rosPackageSet = {
-      actionlib = { actionlib_msgs, boost, catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, rospy, rostest, std_msgs, stdenv }:
+      actionlib = { catkin, cmake, gtest, message_generation, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "actionlib";
-          version = "1.11.9-0";
+          version = "1.11.11-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/actionlib-release/archive/release/lunar/actionlib/1.11.9-0.tar.gz";
-            sha256 = "0c3w2x2r7v0141886qdab6nmpdl6ac909nmlz0a7a2p58fi8207v";
+            url = "https://github.com/ros-gbp/actionlib-release/archive/release/lunar/actionlib/1.11.11-0.tar.gz";
+            sha256 = "0zga69c2bakizacbp2hlmisn363sa54ys53diwws2fql7i36las8";
           };
           propagatedBuildInputs = [
             cmake
             pkgconfig
             gtest
             pyEnv
-            actionlib_msgs
-            boost
             catkin
             message_generation
-            message_runtime
-            roscpp
-            rospy
-            rostest
-            std_msgs
           ];
         };
       angles = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
@@ -41,13 +34,13 @@ let
             catkin
           ];
         };
-      bond = { catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
+      bond = { catkin, cmake, gtest, message_generation, pkgconfig, pyEnv, std_msgs, stdenv }:
       mkRosCmakePackage {
           name = "bond";
-          version = "1.7.19-0";
+          version = "1.8.1-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bond/1.7.19-0.tar.gz";
-            sha256 = "00ibhp989rpz55di37lxd64dwkia1awwy49yivlhgdw8wzzfm1zv";
+            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bond/1.8.1-0.tar.gz";
+            sha256 = "18na0yv70pk35qxbkrn4kqj8jzs5mcvj1jf0vhvnhp1kd38kw5bg";
           };
           propagatedBuildInputs = [
             cmake
@@ -56,62 +49,52 @@ let
             pyEnv
             catkin
             message_generation
-            message_runtime
             std_msgs
           ];
         };
-      bond_core = { bond, bondcpp, bondpy, catkin, cmake, gtest, pkgconfig, pyEnv, smclib, stdenv }:
+      bond_core = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "bond_core";
-          version = "1.7.19-0";
+          version = "1.8.1-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bond_core/1.7.19-0.tar.gz";
-            sha256 = "12r7zmyqzchpr8qy9fig0l0r99a1b2q41ms9zzvxdr0zhg75n0s0";
+            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bond_core/1.8.1-0.tar.gz";
+            sha256 = "18j0iaww4gzya73b4yyanzjk7qkfaj8g8bpdy1jl91y2cx9hm6vs";
           };
           propagatedBuildInputs = [
             cmake
             pkgconfig
             gtest
             pyEnv
-            bond
-            bondcpp
-            bondpy
             catkin
-            smclib
           ];
         };
-      bondcpp = { bond, boost, catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, roscpp, smclib, stdenv, uuid }:
+      bondcpp = { catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "bondcpp";
-          version = "1.7.19-0";
+          version = "1.8.1-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bondcpp/1.7.19-0.tar.gz";
-            sha256 = "1mjp2q31fhx86bjndyy7ixz2jx953n0iprcv7nlxaq252swlzxnv";
+            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bondcpp/1.8.1-0.tar.gz";
+            sha256 = "0x4f2hmcp5436iyx6j76wgy26hcknyqzrgrx4f8zsjjrpqhb1m3k";
           };
           propagatedBuildInputs = [
             cmake
             pkgconfig
             gtest
             pyEnv
-            bond
-            boost
             catkin
             cmake_modules
-            roscpp
-            smclib
-            uuid
           ];
           postPatch = ''
             sed -i -e 's/find_package(UUID REQUIRED)//' -e 's/''${UUID_LIBRARIES}//' ./CMakeLists.txt
           '';
         };
-      bondpy = { bond, catkin, cmake, gtest, pkgconfig, pyEnv, rospy, smclib, stdenv, uuid }:
+      bondpy = { bond, catkin, cmake, gtest, pkgconfig, pyEnv, rospy, smclib, stdenv }:
       mkRosPythonPackage {
           name = "bondpy";
-          version = "1.7.19-0";
+          version = "1.8.1-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bondpy/1.7.19-0.tar.gz";
-            sha256 = "1jc1k2qmh9p35a2h5admg79n9gnpj6i8jxpdw35sckcfr2hgwryi";
+            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/bondpy/1.8.1-0.tar.gz";
+            sha256 = "1jsg53g4v39rj568pdc3d03qjyi4k7ab2khhqpa27k29br1nli2h";
           };
           propagatedBuildInputs = [
             cmake
@@ -122,16 +105,15 @@ let
             catkin
             rospy
             smclib
-            uuid
           ];
         };
       smclib = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "smclib";
-          version = "1.7.19-0";
+          version = "1.8.1-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/smclib/1.7.19-0.tar.gz";
-            sha256 = "0vc574c6q31wjzc05jzwkf17riw81nzr09ab2455rav44hpjw4hw";
+            url = "https://github.com/ros-gbp/bond_core-release/archive/release/lunar/smclib/1.8.1-0.tar.gz";
+            sha256 = "088d8wya5l8mh15hpllr0pnbi391xjwc8xy58cv65xs6pqb7ngap";
           };
           propagatedBuildInputs = [
             cmake
@@ -144,10 +126,10 @@ let
       catkin = { cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "catkin";
-          version = "0.7.6-0";
+          version = "0.7.8-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/catkin-release/archive/release/lunar/catkin/0.7.6-0.tar.gz";
-            sha256 = "1xabz88sbv78537nmk1k9aqpxggamb6vizyzmn1wfg69gr1zqbvp";
+            url = "https://github.com/ros-gbp/catkin-release/archive/release/lunar/catkin/0.7.8-0.tar.gz";
+            sha256 = "1f832r7hc1nd1ss032m9fhpa61vg0nbkwhy78x230ah47gvysmr0";
           };
           propagatedBuildInputs = [
             cmake
@@ -157,26 +139,25 @@ let
           ];
           patchPhase = ''
             sed -i 's|#!@PYTHON_EXECUTABLE@|#!${pyEnv.python.passthru.interpreter}|' ./cmake/templates/_setup_util.py.in
-            sed -i 's|#!/usr/bin/env python|#!${stdenv.shell} ${pyEnv}/bin/python|' ./cmake/parse_package_xml.py
             sed -i 's/PYTHON_EXECUTABLE/SHELL/' ./cmake/catkin_package_xml.cmake
             sed -i 's|#!/usr/bin/env bash|#!${stdenv.shell}|' ./cmake/templates/setup.bash.in
             sed -i 's|#!/usr/bin/env sh|#!${stdenv.shell}|' ./cmake/templates/setup.sh.in
           '';
         };
-      class_loader = { boost, catkin, cmake, cmake_modules, console-bridge, gtest, pkgconfig, poco, pyEnv, stdenv }:
+      class_loader = { catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, console-bridge, poco, boost }:
       mkRosCmakePackage {
           name = "class_loader";
-          version = "0.3.6-0";
+          version = "0.3.8-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/class_loader-release/archive/release/lunar/class_loader/0.3.6-0.tar.gz";
-            sha256 = "0c5pbq8fq71s1qvssxk9r673hgls5rqczmbkzildyf3s4pzmnfq3";
+            url = "https://github.com/ros-gbp/class_loader-release/archive/release/lunar/class_loader/0.3.8-0.tar.gz";
+            sha256 = "0w629q0qv75379jidvwzqvdc2k8z6h5479ma0pkk3s0qcf9ci8k3";
           };
           propagatedBuildInputs = [
             cmake
+            boost
             pkgconfig
             gtest
             pyEnv
-            boost
             catkin
             cmake_modules
             console-bridge
@@ -303,7 +284,8 @@ let
           ];
         };
       sensor_msgs = { catkin, cmake, geometry_msgs, gtest, message_generation, message_runtime, pkgconfig, pyEnv, std_msgs, stdenv }:
-      mkRosPythonPackage {
+  # mkRosPythonPackage {
+  mkRosCmakePackage {
           name = "sensor_msgs";
           version = "1.12.5-0";
           src = fetchurl {
@@ -403,30 +385,23 @@ let
             std_msgs
           ];
         };
-      dynamic_reconfigure = { boost, catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, roscpp_serialization, roslib, rospy, rosservice, rostest, std_msgs, stdenv }:
+      dynamic_reconfigure = { catkin, cmake, gtest, message_generation, pkgconfig, pyEnv, roscpp_serialization, rostest, stdenv }:
       mkRosPythonPackage {
           name = "dynamic_reconfigure";
-          version = "1.5.48-0";
+          version = "1.5.49-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/dynamic_reconfigure-release/archive/release/lunar/dynamic_reconfigure/1.5.48-0.tar.gz";
-            sha256 = "0abbahzs7pq57sm2178wn45ad5sq8lnp7683g15p5cm4ky8s2dhj";
+            url = "https://github.com/ros-gbp/dynamic_reconfigure-release/archive/release/lunar/dynamic_reconfigure/1.5.49-0.tar.gz";
+            sha256 = "0ddj4f2q07dn1r3d78h6a4gyjzdfdz4xnyjmg4cnnj5pn3wvkpm8";
           };
           propagatedBuildInputs = [
             cmake
             pkgconfig
             gtest
             pyEnv
-            boost
             catkin
             message_generation
-            message_runtime
-            roscpp
             roscpp_serialization
-            roslib
-            rospy
-            rosservice
             rostest
-            std_msgs
           ];
         };
       filters = { catkin, cmake, gtest, pkgconfig, pluginlib, pyEnv, rosconsole, roscpp, roslib, rostest, stdenv }:
@@ -513,10 +488,10 @@ let
       genmsg = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "genmsg";
-          version = "0.5.8-0";
+          version = "0.5.9-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/genmsg-release/archive/release/lunar/genmsg/0.5.8-0.tar.gz";
-            sha256 = "1mk0l4hkjlp16ihiap4yarvcgvpar9g9drd7ll31q9xw38pqkx1j";
+            url = "https://github.com/ros-gbp/genmsg-release/archive/release/lunar/genmsg/0.5.9-0.tar.gz";
+            sha256 = "1gx672j642lhnadrcpnln714k7jh0vrpkwyhqv5v877b9vxdgynm";
           };
           propagatedBuildInputs = [
             cmake
@@ -549,10 +524,10 @@ let
       genpy = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "genpy";
-          version = "0.6.5-0";
+          version = "0.6.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/genpy-release/archive/release/lunar/genpy/0.6.5-0.tar.gz";
-            sha256 = "1wh202x7dnjfg14r7l08zqsjxm6jhx4f4m0a6i4r6jw8nx6g544b";
+            url = "https://github.com/ros-gbp/genpy-release/archive/release/lunar/genpy/0.6.7-0.tar.gz";
+            sha256 = "09kbagavc7j40sz6v0jifa5irb5axaqwdnr0qqfr7jww07f9yxv6";
           };
           propagatedBuildInputs = [
             cmake
@@ -569,10 +544,10 @@ let
       eigen_conversions = { catkin, cmake, cmake_modules, eigen, geometry_msgs, gtest, orocos_kdl, pkgconfig, pyEnv, std_msgs, stdenv }:
       mkRosCmakePackage {
           name = "eigen_conversions";
-          version = "1.11.8-0";
+          version = "1.11.9-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry-release/archive/release/lunar/eigen_conversions/1.11.8-0.tar.gz";
-            sha256 = "16qsdk7dym9i59iz9xv3jnhl4apfnwik09bmhsc7k829x7p6rlwa";
+            url = "https://github.com/ros-gbp/geometry-release/archive/release/lunar/eigen_conversions/1.11.9-0.tar.gz";
+            sha256 = "0rp5j4b100gch3ms8laqcw2dpn0lx6jfzjvvkhv8pnq10vi4ipsl";
           };
           propagatedBuildInputs = [
             cmake
@@ -587,13 +562,13 @@ let
             std_msgs
           ];
         };
-      tf = { angles, catkin, cmake, geometry_msgs, graphviz, gtest, message_filters, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp, rostest, roswtf, sensor_msgs, std_msgs, stdenv, tf2, tf2_ros }:
+      tf = { angles, catkin, cmake, geometry_msgs, graphviz, gtest, message_filters, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp, rostime, roswtf, sensor_msgs, std_msgs, stdenv, tf2_ros }:
       mkRosPythonPackage {
           name = "tf";
-          version = "1.11.8-0";
+          version = "1.11.9-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry-release/archive/release/lunar/tf/1.11.8-0.tar.gz";
-            sha256 = "08fsbn14mz0p28yg1gf9r0mnxw3a2h31gph3vir5c86xjgg1p5k7";
+            url = "https://github.com/ros-gbp/geometry-release/archive/release/lunar/tf/1.11.9-0.tar.gz";
+            sha256 = "05mp293ndgvc91n1gmv4mi17j72z95q7l11xskj4cqniqpgls3im";
           };
           propagatedBuildInputs = [
             cmake
@@ -609,21 +584,20 @@ let
             message_runtime
             rosconsole
             roscpp
-            rostest
+            rostime
             roswtf
             sensor_msgs
             std_msgs
-            tf2
             tf2_ros
           ];
         };
       tf2 = { catkin, cmake, console-bridge, geometry_msgs, gtest, pkgconfig, pyEnv, rostime, stdenv, tf2_msgs }:
       mkRosCmakePackage {
           name = "tf2";
-          version = "2-0.5.15-0";
+          version = "2-0.5.17-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2/0.5.15-0.tar.gz";
-            sha256 = "1yzrlaafk6dr2wfs8y4x6h08pdz8hkm4ki54axb58zc8s5xpxkdk";
+            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2/0.5.17-0.tar.gz";
+            sha256 = "0bzic0kcmpiqw2wdc9avb5ib5gm7c788g8p5ri4gmld58iyqhfg8";
           };
           propagatedBuildInputs = [
             cmake
@@ -637,13 +611,13 @@ let
             tf2_msgs
           ];
         };
-      tf2_eigen = { catkin, cmake, cmake_modules, eigen, geometry_msgs, gtest, pkgconfig, pyEnv, stdenv, tf2 }:
+      tf2_eigen = { catkin, cmake, cmake_modules, eigen, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "tf2_eigen";
-          version = "0.5.15-0";
+          version = "0.5.17-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_eigen/0.5.15-0.tar.gz";
-            sha256 = "0ds7rs05y1w9x7lk1zal1vxc7130z0gwdpkiljns51icfpbcd1pz";
+            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_eigen/0.5.17-0.tar.gz";
+            sha256 = "1njddwy8619w5v2w0m864gjhxzinc1wc4h81gfqm8mij1byhxjqz";
           };
           propagatedBuildInputs = [
             cmake
@@ -653,17 +627,15 @@ let
             catkin
             cmake_modules
             eigen
-            geometry_msgs
-            tf2
           ];
         };
-      tf2_geometry_msgs = { catkin, cmake, geometry_msgs, gtest, orocos_kdl, pkgconfig, pyEnv, python_orocos_kdl, stdenv, tf2, tf2_ros }:
+      tf2_geometry_msgs = { catkin, cmake, gtest, pkgconfig, pyEnv, python_orocos_kdl, stdenv }:
       mkRosPythonPackage {
           name = "tf2_geometry_msgs";
-          version = "0.5.15-0";
+          version = "0.5.17-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_geometry_msgs/0.5.15-0.tar.gz";
-            sha256 = "1mkdzkkz0lg0b3hs24bj4mfl6z0qgwkrzf94givpapx7wrg1a99k";
+            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_geometry_msgs/0.5.17-0.tar.gz";
+            sha256 = "030fcsjf1xzxdh5fqjyf958jn81fppf9df6w6f78m6xmkcmr6v6z";
           };
           propagatedBuildInputs = [
             cmake
@@ -671,20 +643,16 @@ let
             gtest
             pyEnv
             catkin
-            geometry_msgs
-            orocos_kdl
             python_orocos_kdl
-            tf2
-            tf2_ros
           ];
         };
       tf2_msgs = { actionlib_msgs, catkin, cmake, geometry_msgs, gtest, message_generation, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "tf2_msgs";
-          version = "0.5.15-0";
+          version = "0.5.17-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_msgs/0.5.15-0.tar.gz";
-            sha256 = "1xjhfahikccg8w4x26cpakx7wyb3wl8cmyrys5sd8yaa9skxg29m";
+            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_msgs/0.5.17-0.tar.gz";
+            sha256 = "11hy2s3zx846li7yznz9rxcc6q2j6yvc3lmc917ih6bjfwxj8bia";
           };
           propagatedBuildInputs = [
             cmake
@@ -700,10 +668,10 @@ let
       tf2_py = { catkin, cmake, gtest, pkgconfig, pyEnv, rospy, stdenv, tf2 }:
       mkRosPythonPackage {
           name = "tf2_py";
-          version = "0.5.15-0";
+          version = "0.5.17-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_py/0.5.15-0.tar.gz";
-            sha256 = "1gyailfjafrfnp8rid6s2qx2001w8n19i67sgi7jljvbdcvfpfvm";
+            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_py/0.5.17-0.tar.gz";
+            sha256 = "0gw6gjjw56bd9p9fqjvmcncyiqir61l7fv6lspda69n510gjw234";
           };
           propagatedBuildInputs = [
             cmake
@@ -718,10 +686,10 @@ let
       tf2_ros = { actionlib, actionlib_msgs, catkin, cmake, geometry_msgs, gtest, message_filters, pkgconfig, pyEnv, roscpp, rosgraph, rospy, std_msgs, stdenv, tf2, tf2_msgs, tf2_py, xmlrpcpp }:
       mkRosPythonPackage {
           name = "tf2_ros";
-          version = "0.5.15-0";
+          version = "0.5.17-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_ros/0.5.15-0.tar.gz";
-            sha256 = "1wxwkanmpd2ggbivh754awznn4jvfy1i5m16q77cl92lvzh9xyin";
+            url = "https://github.com/ros-gbp/geometry2-release/archive/release/lunar/tf2_ros/0.5.17-0.tar.gz";
+            sha256 = "0lhpmzg7kpnnrn8h1220jl43jqc0pcadqqb2dgvw4jzgz086a5cs";
           };
           propagatedBuildInputs = [
             cmake
@@ -746,10 +714,10 @@ let
       camera_calibration_parsers = { boost, catkin, cmake, gtest, libyamlcpp, pkgconfig, pyEnv, rosconsole, roscpp, roscpp_serialization, sensor_msgs, stdenv }:
       mkRosPythonPackage {
           name = "camera_calibration_parsers";
-          version = "1.11.12-0";
+          version = "1.11.13-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/camera_calibration_parsers/1.11.12-0.tar.gz";
-            sha256 = "1591ifzda40gc29pj4h22hzfinbzq33b4yb210yhw1lv97p64iix";
+            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/camera_calibration_parsers/1.11.13-0.tar.gz";
+            sha256 = "0vglpgjrnkl3nc64rckb9k08laa481m0rwnp7dabxfv220v2wz0k";
           };
           propagatedBuildInputs = [
             cmake
@@ -769,10 +737,10 @@ let
       camera_info_manager = { boost, camera_calibration_parsers, catkin, cmake, gtest, image_transport, pkgconfig, pyEnv, roscpp, roslib, rostest, sensor_msgs, stdenv }:
       mkRosCmakePackage {
           name = "camera_info_manager";
-          version = "1.11.12-0";
+          version = "1.11.13-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/camera_info_manager/1.11.12-0.tar.gz";
-            sha256 = "08rhcfq80vih3h3bxgzrn9wda5pfi9bj8ra25wyk38hp1y68l7l3";
+            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/camera_info_manager/1.11.13-0.tar.gz";
+            sha256 = "1yirkbmxblxqnjjc7l0sz800caj7rkywvbnkx7cmhc2nxlza7gkn";
           };
           propagatedBuildInputs = [
             cmake
@@ -792,10 +760,10 @@ let
       image_common = { camera_calibration_parsers, camera_info_manager, catkin, cmake, gtest, image_transport, pkgconfig, polled_camera, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "image_common";
-          version = "1.11.12-0";
+          version = "1.11.13-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/image_common/1.11.12-0.tar.gz";
-            sha256 = "0y1w39f3dkc9yamjmkjffqv60cmv5z3dvzzf9ypvx5dsb8gxrnzb";
+            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/image_common/1.11.13-0.tar.gz";
+            sha256 = "1gja2xhsd1ymbg3p5n94qg9bdryxc6bkp1w37cx3xzdhmxw631gv";
           };
           propagatedBuildInputs = [
             cmake
@@ -812,10 +780,10 @@ let
       image_transport = { catkin, cmake, gtest, message_filters, pkgconfig, pluginlib, pyEnv, rosconsole, roscpp, roslib, sensor_msgs, stdenv }:
       mkRosCmakePackage {
           name = "image_transport";
-          version = "1.11.12-0";
+          version = "1.11.13-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/image_transport/1.11.12-0.tar.gz";
-            sha256 = "1c62n8vlkh5hvbjbklpizm0b44qipqqh1l3lib49vbdkqai82qmn";
+            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/image_transport/1.11.13-0.tar.gz";
+            sha256 = "0r102lx9ldyqmgg0k25iflidy5bakjklscx53xlikqvcq4gm13jf";
           };
           propagatedBuildInputs = [
             cmake
@@ -834,10 +802,10 @@ let
       polled_camera = { catkin, cmake, gtest, image_transport, message_generation, message_runtime, pkgconfig, pyEnv, roscpp, sensor_msgs, std_msgs, stdenv }:
       mkRosCmakePackage {
           name = "polled_camera";
-          version = "1.11.12-0";
+          version = "1.11.13-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/polled_camera/1.11.12-0.tar.gz";
-            sha256 = "0k97wlkm38qpakvs8c8zb2p7379vscdlva3zi1mbj36z5n36gmjf";
+            url = "https://github.com/ros-gbp/image_common-release/archive/release/lunar/polled_camera/1.11.13-0.tar.gz";
+            sha256 = "1603zbdicsgjr5xmjs8rn455bbvazjf3mcbic49c0c25443xk9ax";
           };
           propagatedBuildInputs = [
             cmake
@@ -856,10 +824,10 @@ let
       camera_calibration = { catkin, cmake, cv_bridge, gtest, image_geometry, message_filters, pkgconfig, pyEnv, rospy, sensor_msgs, std_srvs, stdenv }:
       mkRosPythonPackage {
           name = "camera_calibration";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/camera_calibration/1.12.20-0.tar.gz";
-            sha256 = "126v1xq571zkm6z1hzhjwpqnmmwn0nxgiy5bxppb5c732b17kjqq";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/camera_calibration/1.12.21-0.tar.gz";
+            sha256 = "1rkigd3kwsd7vvah3ivwhh2cdy8sj6ksgpch7j1dh47d939sc4hz";
           };
           propagatedBuildInputs = [
             cmake
@@ -878,10 +846,10 @@ let
       depth_image_proc = { boost, catkin, cmake, cmake_modules, cv_bridge, eigen_conversions, gtest, image_geometry, image_transport, message_filters, nodelet, pkgconfig, pyEnv, sensor_msgs, stdenv, stereo_msgs, tf2, tf2_ros }:
       mkRosCmakePackage {
           name = "depth_image_proc";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/depth_image_proc/1.12.20-0.tar.gz";
-            sha256 = "0h27gv6ma69wghqnix2qvn86fwwx3zpx2azgm7bjvbixdna8wapa";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/depth_image_proc/1.12.21-0.tar.gz";
+            sha256 = "152z7ad5zzrj1brsfq4jf9wndkcgcp9498lyj1qm7pdknay93mpl";
           };
           propagatedBuildInputs = [
             cmake
@@ -906,10 +874,10 @@ let
       image_pipeline = { camera_calibration, catkin, cmake, depth_image_proc, gtest, image_proc, image_publisher, image_rotate, image_view, pkgconfig, pyEnv, stdenv, stereo_image_proc }:
       mkRosCmakePackage {
           name = "image_pipeline";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_pipeline/1.12.20-0.tar.gz";
-            sha256 = "0g88cp931r3rcmzbl365sqzv89sbpffgwby65r412p19v51ipcj7";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_pipeline/1.12.21-0.tar.gz";
+            sha256 = "1lj4cxs7xmclkmmacjz5z8vmaa5cilrh8kx8v72gmxhfvw72r013";
           };
           propagatedBuildInputs = [
             cmake
@@ -929,10 +897,10 @@ let
       image_proc = { boost, catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_geometry, image_transport, nodelet, nodelet_topic_tools, pkgconfig, pyEnv, roscpp, sensor_msgs, stdenv }:
       mkRosCmakePackage {
           name = "image_proc";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_proc/1.12.20-0.tar.gz";
-            sha256 = "13nvxsj2xajvbsb2hl0i1afqb62aig8a863yqnyjyqi0wy5bsbb7";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_proc/1.12.21-0.tar.gz";
+            sha256 = "17n1ybjfkma8sy99gl7q26cplv3p14syr77hii2alw48wmw5gnxa";
           };
           propagatedBuildInputs = [
             cmake
@@ -954,10 +922,10 @@ let
       image_publisher = { camera_info_manager, catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_transport, nodelet, pkgconfig, pyEnv, roscpp, sensor_msgs, stdenv }:
       mkRosCmakePackage {
           name = "image_publisher";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_publisher/1.12.20-0.tar.gz";
-            sha256 = "0z12fccwcpqrd1k35qnlsix6i9vw9b9fcqr2jb215w1v8jwwq9s5";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_publisher/1.12.21-0.tar.gz";
+            sha256 = "0f9a01nlqr47bwlyzrwgk30yx6zwx47y9j28r0s0myrlh6sd7c03";
           };
           propagatedBuildInputs = [
             cmake
@@ -977,10 +945,10 @@ let
       image_rotate = { catkin, cmake, cmake_modules, cv_bridge, dynamic_reconfigure, geometry_msgs, gtest, image_transport, nodelet, pkgconfig, pyEnv, roscpp, stdenv, tf2, tf2_geometry_msgs, tf2_ros }:
       mkRosCmakePackage {
           name = "image_rotate";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_rotate/1.12.20-0.tar.gz";
-            sha256 = "14x1rnjz7x3k1r1gdqib1x9pfj53mdhb14087wiyi6dp2yj74dzx";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_rotate/1.12.21-0.tar.gz";
+            sha256 = "1c5lz3phay4330phpgvkfkap9ak1kxb9qijx4apppcla6pip9fz4";
           };
           propagatedBuildInputs = [
             cmake
@@ -1003,10 +971,10 @@ let
       image_view = { camera_calibration_parsers, catkin, cmake, cv_bridge, dynamic_reconfigure, glib, gtest, gtk2, image_transport, message_filters, message_generation, nodelet, pango, pkgconfig, pyEnv, rosconsole, roscpp, sensor_msgs, std_srvs, stdenv, stereo_msgs }:
       mkRosCmakePackage {
           name = "image_view";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_view/1.12.20-0.tar.gz";
-            sha256 = "1q03z0qknrdafznca6id8zi17slys1nb5ncgk8dk0c4iv43yvdv3";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/image_view/1.12.21-0.tar.gz";
+            sha256 = "1r6jvv68259fgydm2sy2z2970naywvbpfkshzhdbic527yyb85j3";
           };
           propagatedBuildInputs = [
             cmake
@@ -1040,10 +1008,10 @@ let
       stereo_image_proc = { catkin, cmake, cv_bridge, dynamic_reconfigure, gtest, image_geometry, image_proc, image_transport, message_filters, nodelet, pkgconfig, pyEnv, sensor_msgs, stdenv, stereo_msgs }:
       mkRosCmakePackage {
           name = "stereo_image_proc";
-          version = "1.12.20-0";
+          version = "1.12.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/stereo_image_proc/1.12.20-0.tar.gz";
-            sha256 = "1jzii6anjlz2srciv3is0hrh2xhafkw2l2njp66vs31lnssykp8z";
+            url = "https://github.com/ros-gbp/image_pipeline-release/archive/release/lunar/stereo_image_proc/1.12.21-0.tar.gz";
+            sha256 = "1wbrdyvpnkp07f2rsk48fsbkb92vajn34xl6ixad63sslfxrzz0m";
           };
           propagatedBuildInputs = [
             cmake
@@ -1068,7 +1036,7 @@ let
           version = "1.9.5-0";
           src = fetchurl {
             url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/lunar/compressed_depth_image_transport/1.9.5-0.tar.gz";
-            sha256 = "0n622fgm40jbs64s91d1299zc53fj69clqhq10c1i3v2p4bcj24k";
+            sha256 = "0rjcnxk8hnayfccq1gd0jfwc8lv6flwlxmdp6860bp53r844n6hq";
           };
           propagatedBuildInputs = [
             cmake
@@ -1087,7 +1055,7 @@ let
           version = "1.9.5-0";
           src = fetchurl {
             url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/lunar/compressed_image_transport/1.9.5-0.tar.gz";
-            sha256 = "02dc93ylkyfw1cdxn4fjxsjdmdfvxd9bml9ypp9z2cqhpmw9vp78";
+            sha256 = "0z4l81y2n2hiv1gqkslxxxpkvfwjpxcv0hisjh3d7a0grzmrpgf7";
           };
           propagatedBuildInputs = [
             cmake
@@ -1125,7 +1093,7 @@ let
           version = "1.9.5-0";
           src = fetchurl {
             url = "https://github.com/ros-gbp/image_transport_plugins-release/archive/release/lunar/theora_image_transport/1.9.5-0.tar.gz";
-            sha256 = "1b7wrxsan369x7l3ahslpb01arsd5r25sw3264brc0df3rsb587k";
+            sha256 = "060h5689zif6ly26h2lgl2ik6ml6mddz95li1rv6kikyjaksrsjz";
           };
           propagatedBuildInputs = [
             cmake
@@ -1174,10 +1142,10 @@ let
       laser_filters = { angles, catkin, cmake, filters, gtest, laser_geometry, message_filters, pkgconfig, pluginlib, pyEnv, roscpp, rostest, sensor_msgs, stdenv, tf }:
       mkRosCmakePackage {
           name = "laser_filters";
-          version = "1.8.4-1";
+          version = "1.8.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/laser_filters-release/archive/release/lunar/laser_filters/1.8.4-1.tar.gz";
-            sha256 = "1sknds214gc97j1cl4y4nb2l1jm283gpcfcg0pwr673fdkr84zhj";
+            url = "https://github.com/ros-gbp/laser_filters-release/archive/release/lunar/laser_filters/1.8.5-0.tar.gz";
+            sha256 = "1rx66fm2kr4azmmb5f8s7nkhz2cr4r7q6zmqkjiwb37hkl11vifk";
           };
           propagatedBuildInputs = [
             cmake
@@ -1363,43 +1331,34 @@ let
             std_srvs
           ];
         };
-      nodelet = { bondcpp, boost, catkin, cmake, cmake_modules, gtest, message_generation, message_runtime, pkgconfig, pluginlib, pyEnv, rosconsole, roscpp, rospy, std_msgs, stdenv, uuid }:
+      nodelet = { catkin, cmake, cmake_modules, gtest, message_generation, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "nodelet";
-          version = "1.9.10-0";
+          version = "1.9.14-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/lunar/nodelet/1.9.10-0.tar.gz";
-            sha256 = "12nl8nz0szqhnbp7sb1z02d1j9iz3wz6iznzv15xmf2ymsj4lx8k";
+            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/lunar/nodelet/1.9.14-0.tar.gz";
+            sha256 = "08fihgwa8r61g89vjw38a4rh27h783i7wv4cn3xaz9gcygjg0crf";
           };
           propagatedBuildInputs = [
             cmake
             pkgconfig
             gtest
             pyEnv
-            bondcpp
-            boost
             catkin
             cmake_modules
             message_generation
-            message_runtime
-            pluginlib
-            rosconsole
-            roscpp
-            rospy
-            std_msgs
-            uuid
           ];
           postPatch = ''
             sed -i -e 's/find_package(UUID REQUIRED)//' -e 's/ ''${UUID_INCLUDE_DIRS}//' -e 's/ ''${UUID_LIBRARIES}//g' ./CMakeLists.txt
           '';
         };
-      nodelet_core = { catkin, cmake, gtest, nodelet, nodelet_topic_tools, pkgconfig, pyEnv, stdenv }:
+      nodelet_core = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "nodelet_core";
-          version = "1.9.10-0";
+          version = "1.9.14-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/lunar/nodelet_core/1.9.10-0.tar.gz";
-            sha256 = "120ywa3j7py44aaya8ysivxaldvlwzj700w96lxcvf1q8j8x0gri";
+            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/lunar/nodelet_core/1.9.14-0.tar.gz";
+            sha256 = "0yb7891lmz5ph9j5ih35ws5vzgnpdiqv8qlz3vb6sb0l8ir7mxz3";
           };
           propagatedBuildInputs = [
             cmake
@@ -1407,30 +1366,22 @@ let
             gtest
             pyEnv
             catkin
-            nodelet
-            nodelet_topic_tools
           ];
         };
-      nodelet_topic_tools = { boost, catkin, cmake, dynamic_reconfigure, gtest, message_filters, nodelet, pkgconfig, pluginlib, pyEnv, roscpp, stdenv }:
+      nodelet_topic_tools = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "nodelet_topic_tools";
-          version = "1.9.10-0";
+          version = "1.9.14-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/lunar/nodelet_topic_tools/1.9.10-0.tar.gz";
-            sha256 = "0pmbnfd96bpg9rspfpmhfyqqb9l9nnzqb76sglsxcflna2ph2qjl";
+            url = "https://github.com/ros-gbp/nodelet_core-release/archive/release/lunar/nodelet_topic_tools/1.9.14-0.tar.gz";
+            sha256 = "15rbgkifyjn72fy7avr4fpmkxrz7l8a9v36grpawq6yr742ka0jy";
           };
           propagatedBuildInputs = [
             cmake
             pkgconfig
             gtest
             pyEnv
-            boost
             catkin
-            dynamic_reconfigure
-            message_filters
-            nodelet
-            pluginlib
-            roscpp
           ];
         };
       orocos_kdl = { catkin, cmake, eigen, gtest, pkgconfig, pyEnv, stdenv }:
@@ -1575,35 +1526,34 @@ let
             pcl_ros
           ];
         };
-      pluginlib = { boost, catkin, class_loader, cmake, cmake_modules, gtest, pkgconfig, pyEnv, rosconsole, roslib, stdenv, tinyxml }:
-      mkRosPythonPackage {
+      pluginlib = { catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, class_loader, rosconsole, roslib }:
+  # mkRosPythonPackage {
+  mkRosCmakePackage {
           name = "pluginlib";
-          version = "1.10.5-0";
+          version = "1.11.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/pluginlib-release/archive/release/lunar/pluginlib/1.10.5-0.tar.gz";
-            sha256 = "1aixz12fjyan22chlj71syaskc5pk50c8a0l2ni7ffz94347lxaj";
+            url = "https://github.com/ros-gbp/pluginlib-release/archive/release/lunar/pluginlib/1.11.2-0.tar.gz";
+            sha256 = "0nj9kc3f158lghxjr7jmla46fn831z5m8zck3ghaj8kxg57yngay";
           };
           propagatedBuildInputs = [
             cmake
             pkgconfig
             gtest
             pyEnv
-            boost
             catkin
-            class_loader
             cmake_modules
+            class_loader
             rosconsole
             roslib
-            tinyxml
           ];
         };
       mk = { catkin, cmake, gtest, pkgconfig, pyEnv, rosbuild, stdenv }:
       mkRosCmakePackage {
           name = "mk";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/mk/1.14.0-0.tar.gz";
-            sha256 = "1w5gzcylgb1bddsi6ya1ad7dr8frmhmba2x1w36d5pbs7yrbp1hl";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/mk/1.14.2-0.tar.gz";
+            sha256 = "0nfk3pblb4498c8q95hcyfi9mdixld3vys15fnxjp7fjrw7vlw18";
           };
           propagatedBuildInputs = [
             cmake
@@ -1617,10 +1567,10 @@ let
       ros = { catkin, cmake, gtest, mk, pkgconfig, pyEnv, rosbash, rosboost_cfg, rosbuild, rosclean, roscreate, roslang, roslib, rosmake, rosunit, stdenv }:
       mkRosCmakePackage {
           name = "ros";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/ros/1.14.0-0.tar.gz";
-            sha256 = "0gn9k8d7cvf4nzppbxdb4c3ml7rj6kr9p0fbgh76zdqjw6gkbni6";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/ros/1.14.2-0.tar.gz";
+            sha256 = "00a97c75zfham2zwc001cyqzi4g4br8ry3xsjyq7cnzigfwhkwkq";
           };
           propagatedBuildInputs = [
             cmake
@@ -1643,10 +1593,10 @@ let
       rosbash = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "rosbash";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosbash/1.14.0-0.tar.gz";
-            sha256 = "1hmjsxhvk4ksip6shb6b3jvxb9x6vwm7l32r11j01l0wkpcgqd6b";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosbash/1.14.2-0.tar.gz";
+            sha256 = "01fdsrffr9rlry26vb1g5109hli1xz8i5wmlrw6fnp487a7zpbjh";
           };
           propagatedBuildInputs = [
             cmake
@@ -1662,10 +1612,10 @@ let
       rosboost_cfg = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "rosboost_cfg";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosboost_cfg/1.14.0-0.tar.gz";
-            sha256 = "0yz7bx7r9615gjm02f8nhff0izsy13qsyxk3i1swp5siqrqgjzmn";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosboost_cfg/1.14.2-0.tar.gz";
+            sha256 = "175m1dgwy62fdgqh1mrszfaykc78kf85g4i6avdsl5hj2bmxhrxf";
           };
           propagatedBuildInputs = [
             cmake
@@ -1678,10 +1628,10 @@ let
       rosbuild = { catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "rosbuild";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosbuild/1.14.0-0.tar.gz";
-            sha256 = "1qw3h5gwmh8m78zjx5jibm1vvzfz3b6rcb2jwadjac7p5ymzsb2a";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosbuild/1.14.2-0.tar.gz";
+            sha256 = "1f40184nq1vsg31p12w87lrhpdga2pq4fwm3fhryai2jpjn63g6c";
           };
           propagatedBuildInputs = [
             cmake
@@ -1697,10 +1647,10 @@ let
       rosclean = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "rosclean";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosclean/1.14.0-0.tar.gz";
-            sha256 = "18h8v6m6ss3i77lfkwljcf1bxb5gxjxlridw86vmd7f5ld7q0arx";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosclean/1.14.2-0.tar.gz";
+            sha256 = "1ay4pr0c1fb02pvk86b1wlvcnw1fk4907wg01i17mymbv8d27ss0";
           };
           propagatedBuildInputs = [
             cmake
@@ -1713,10 +1663,10 @@ let
       roscreate = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "roscreate";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/roscreate/1.14.0-0.tar.gz";
-            sha256 = "13z6zgjh3bgzsh6lqhr69m1vqv3980x54rsisr4nxjp4ryy2niy9";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/roscreate/1.14.2-0.tar.gz";
+            sha256 = "178xdqyazxacvpnbjxdp5m35bgj3an2yh05698a762m139hy0xlz";
           };
           propagatedBuildInputs = [
             cmake
@@ -1729,10 +1679,10 @@ let
       roslang = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "roslang";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/roslang/1.14.0-0.tar.gz";
-            sha256 = "1w22mpa9iwp2lanw5z1by1q20dwhpypgaggmwsif7h6rdsd66hck";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/roslang/1.14.2-0.tar.gz";
+            sha256 = "0cplv4pcl66v2cqsmh20xf6g9z76d2w1bz1cqxp3sjmiqpy18k69";
           };
           propagatedBuildInputs = [
             cmake
@@ -1746,10 +1696,10 @@ let
       roslib = { boost, catkin, cmake, gtest, pkgconfig, pyEnv, rospack, stdenv }:
       mkRosPythonPackage {
           name = "roslib";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/roslib/1.14.0-0.tar.gz";
-            sha256 = "1ngwczagxjqqv6cnpafmwhll3g6kijgam2fyjg51sxllnsllwp47";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/roslib/1.14.2-0.tar.gz";
+            sha256 = "1x7m5qlx952q7y24wvpxvcfqy812c3n49kmllxy9lrf631akbxy5";
           };
           propagatedBuildInputs = [
             cmake
@@ -1764,10 +1714,10 @@ let
       rosmake = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "rosmake";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosmake/1.14.0-0.tar.gz";
-            sha256 = "0x73p3n9jymg7gc47i70q7x83b2qyh4h0x998hqmk1chzn9aam8n";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosmake/1.14.2-0.tar.gz";
+            sha256 = "11d19acrk852zd7wa041qzir2jl6ad6irdx0bj6v3bb45c720757";
           };
           propagatedBuildInputs = [
             cmake
@@ -1780,10 +1730,10 @@ let
       rosunit = { catkin, cmake, gtest, pkgconfig, pyEnv, roslib, stdenv }:
       mkRosPythonPackage {
           name = "rosunit";
-          version = "1.14.0-0";
+          version = "1.14.2-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosunit/1.14.0-0.tar.gz";
-            sha256 = "0s1xdgxlzzr9hl7bw5lpyj7nq6qrds9jp9fk9hxxvkgqiw30m47g";
+            url = "https://github.com/ros-gbp/ros-release/archive/release/lunar/rosunit/1.14.2-0.tar.gz";
+            sha256 = "0cqrvnffqs3p99l9s9wdkm4mr2z1l4jx9kgkp3qx8xqbfkhj93i2";
           };
           propagatedBuildInputs = [
             cmake
@@ -1797,10 +1747,10 @@ let
       message_filters = { boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosconsole, roscpp, rostest, rosunit, stdenv, xmlrpcpp }:
       mkRosPythonPackage {
           name = "message_filters";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/message_filters/1.13.0-0.tar.gz";
-            sha256 = "1hawqk4dp3ll9hb6249w2kqbki95a6h5g80qgzjr9kjbzwng0s8i";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/message_filters/1.13.5-0.tar.gz";
+            sha256 = "1v9hz75kxg31y79z6ffxm7vgz941j2n4hm5i5i57vwfxpx67wfjg";
           };
           propagatedBuildInputs = [
             cmake
@@ -1819,10 +1769,10 @@ let
       ros_comm = { catkin, cmake, gtest, message_filters, pkgconfig, pyEnv, ros, rosbag, rosconsole, roscpp, rosgraph, rosgraph_msgs, roslaunch, roslisp, rosmaster, rosmsg, rosnode, rosout, rosparam, rospy, rosservice, rostest, rostopic, roswtf, std_srvs, stdenv, topic_tools, xmlrpcpp }:
       mkRosCmakePackage {
           name = "ros_comm";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/ros_comm/1.13.0-0.tar.gz";
-            sha256 = "15x76ic6fbmskz13075qziyw2w4d6iwmf1sfi4sbn858idgambn3";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/ros_comm/1.13.5-0.tar.gz";
+            sha256 = "043sy5hcbsx220a2f9cf0ihjhw1lrnx5dagqsb5z5lwpb9klvlfm";
           };
           propagatedBuildInputs = [
             cmake
@@ -1857,10 +1807,10 @@ let
       rosbag = { boost, catkin, cmake, cpp_common, genmsg, genpy, gtest, pkgconfig, pyEnv, rosbag_storage, rosconsole, roscpp, roscpp_serialization, roslib, rospy, std_srvs, stdenv, topic_tools, xmlrpcpp }:
       mkRosPythonPackage {
           name = "rosbag";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosbag/1.13.0-0.tar.gz";
-            sha256 = "0cfpagwyp9z8fjpwvq8l21gg2284nbvl8zngp957x0b02q7hf1yx";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosbag/1.13.5-0.tar.gz";
+            sha256 = "1ndqji4cvrg8ri23si6kqc5bq3klxasxaa2bv55v2rbf6znp9wyq";
           };
           propagatedBuildInputs = [
             cmake
@@ -1886,10 +1836,10 @@ let
       rosbag_storage = { boost, bzip2, catkin, cmake, console-bridge, cpp_common, gtest, pkgconfig, pyEnv, roscpp_serialization, roscpp_traits, roslz4, rostime, stdenv }:
       mkRosCmakePackage {
           name = "rosbag_storage";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosbag_storage/1.13.0-0.tar.gz";
-            sha256 = "0glz0y97i6k9xiyym2b0fgnih5fkfsmvdpwpag4lfxd40y9saba7";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosbag_storage/1.13.5-0.tar.gz";
+            sha256 = "1rbshi7nvpxw58r33iwnbfylq7h64pb0lz5v6y12nqpigzrkvmh4";
           };
           propagatedBuildInputs = [
             cmake
@@ -1910,10 +1860,10 @@ let
       rosconsole = { apr, boost, catkin, cmake, cpp_common, gtest, log4cxx, pkgconfig, pyEnv, rosbuild, rostime, rosunit, stdenv }:
       mkRosCmakePackage {
           name = "rosconsole";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosconsole/1.13.0-0.tar.gz";
-            sha256 = "1v6xc2rvq0b33006f9zmpl005syhgn25crvdhnwrbljcbmjz2xbv";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosconsole/1.13.5-0.tar.gz";
+            sha256 = "07mirws4nbl5h7b3a3c5l8kx5rc3s6124rw590c8rldz0bqdxrmi";
           };
           propagatedBuildInputs = [
             cmake
@@ -1933,10 +1883,10 @@ let
       roscpp = { catkin, cmake, cpp_common, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp_serialization, roscpp_traits, rosgraph_msgs, roslang, rostime, std_msgs, stdenv, xmlrpcpp }:
       mkRosCmakePackage {
           name = "roscpp";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roscpp/1.13.0-0.tar.gz";
-            sha256 = "0kxhn1y19v83cz7pzv2lfgkdvsn0x776k6971rqzqw0hngvi4mca";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roscpp/1.13.5-0.tar.gz";
+            sha256 = "0ks1gaybsbwrjjx6l0vx16wh95y34ck6w3w0qyj6z3pg3qd6m3dj";
           };
           propagatedBuildInputs = [
             cmake
@@ -1961,10 +1911,10 @@ let
       rosgraph = { catkin, cmake, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "rosgraph";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosgraph/1.13.0-0.tar.gz";
-            sha256 = "0q5ycflb0b8icwzwywidggfqhcz8ljf5760kgxd1l2vsvd6hq1yx";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosgraph/1.13.5-0.tar.gz";
+            sha256 = "0w5yn0i1cf1xdqc53bi8ij3qwxjxxg80npxpfzvhxj9xfqx6whdn";
           };
           propagatedBuildInputs = [
             cmake
@@ -1977,10 +1927,10 @@ let
       roslaunch = { catkin, cmake, gtest, pkgconfig, pyEnv, rosclean, rosgraph_msgs, roslib, rosmaster, rosout, rosparam, rosunit, stdenv }:
       mkRosPythonPackage {
           name = "roslaunch";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roslaunch/1.13.0-0.tar.gz";
-            sha256 = "1bvcz0xb24s5y8bshfj5mrfhqhaz5k33w3q936v0p87g5bdkvxnf";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roslaunch/1.13.5-0.tar.gz";
+            sha256 = "0rvf7wnq7jcz0hqmqv42xxsr6fr97vh0n534v0h5qgkawlpvyrww";
           };
           propagatedBuildInputs = [
             cmake
@@ -2000,10 +1950,10 @@ let
       roslz4 = { catkin, cmake, gtest, lz4, pkgconfig, pyEnv, stdenv }:
       mkRosPythonPackage {
           name = "roslz4";
-          version = "4-1.13.0-0";
+          version = "4-1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roslz4/1.13.0-0.tar.gz";
-            sha256 = "0xd300kwk14400fqpqcbx09rb4hbv5v979g09x1gn2l0gsc9395a";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roslz4/1.13.5-0.tar.gz";
+            sha256 = "0369kqa0ilzhp7mhb135npc2q4yk9lzi6xra6vri6aaykblf0ri4";
           };
           propagatedBuildInputs = [
             cmake
@@ -2017,10 +1967,10 @@ let
       rosmaster = { catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, stdenv }:
       mkRosPythonPackage {
           name = "rosmaster";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosmaster/1.13.0-0.tar.gz";
-            sha256 = "0b2zh5m0c2yxp0k6lnil1j26zvmrkryqpvrm239rnkw2jww7z3iw";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosmaster/1.13.5-0.tar.gz";
+            sha256 = "0iap8h7qznr6y4b7iy7dsvwn0xala1cvfcfv3cv7xag3fxvz8rrg";
           };
           propagatedBuildInputs = [
             cmake
@@ -2031,13 +1981,13 @@ let
             rosgraph
           ];
         };
-      rosmsg = { catkin, cmake, genmsg, gtest, pkgconfig, pyEnv, rosbag, roslib, stdenv }:
+      rosmsg = { catkin, cmake, genmsg, genpy, gtest, pkgconfig, pyEnv, rosbag, roslib, stdenv }:
       mkRosPythonPackage {
           name = "rosmsg";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosmsg/1.13.0-0.tar.gz";
-            sha256 = "0lwnih5y30fsmh4rlff30n056xckncasn3r2a5r04xnzh39dkd5r";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosmsg/1.13.5-0.tar.gz";
+            sha256 = "17bf4w8xrbxz4jbpia4f55aprhnvjkn8j6wrc5vi879dhylhsz6j";
           };
           propagatedBuildInputs = [
             cmake
@@ -2046,6 +1996,7 @@ let
             pyEnv
             catkin
             genmsg
+            genpy
             rosbag
             roslib
           ];
@@ -2053,10 +2004,10 @@ let
       rosnode = { catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, rostest, rostopic, stdenv }:
       mkRosPythonPackage {
           name = "rosnode";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosnode/1.13.0-0.tar.gz";
-            sha256 = "08svgdv8mqjz39flniz53rhiymgfa5gw2qm4x0jf2ax7xyjpydzm";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosnode/1.13.5-0.tar.gz";
+            sha256 = "0jlrkik22nwy88p7i49xq8ldypbggd626fksrdnjyq8w31ll75ls";
           };
           propagatedBuildInputs = [
             cmake
@@ -2072,10 +2023,10 @@ let
       rosout = { catkin, cmake, gtest, pkgconfig, pyEnv, roscpp, rosgraph_msgs, stdenv }:
       mkRosCmakePackage {
           name = "rosout";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosout/1.13.0-0.tar.gz";
-            sha256 = "11fanww1kxi2fnfw0dd7agwwr2qhgb0dfx99z84agllzry3j5rks";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosout/1.13.5-0.tar.gz";
+            sha256 = "10n6z2gsl0ypyi1n5l2szq1s49abwvz9bq1akhqj8j1sj3v996gy";
           };
           propagatedBuildInputs = [
             cmake
@@ -2090,10 +2041,10 @@ let
       rosparam = { catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, stdenv }:
       mkRosPythonPackage {
           name = "rosparam";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosparam/1.13.0-0.tar.gz";
-            sha256 = "1hih4zi376j1j83bih2dra02ywyhlvnagizfx7savgv0dj7zxzjj";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosparam/1.13.5-0.tar.gz";
+            sha256 = "1dxqnhs156anqsvhfnnfpxsb8fr5nghf1bs7z6gmh649bxwa63fx";
           };
           propagatedBuildInputs = [
             cmake
@@ -2107,10 +2058,10 @@ let
       rospy = { catkin, cmake, genpy, gtest, pkgconfig, pyEnv, roscpp, rosgraph, rosgraph_msgs, roslib, std_msgs, stdenv }:
       mkRosPythonPackage {
           name = "rospy";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rospy/1.13.0-0.tar.gz";
-            sha256 = "0lwg5lxvcm5qvag5rgp85jh2q889xmxbxxcrw5wj69il02r9dgkz";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rospy/1.13.5-0.tar.gz";
+            sha256 = "0q5ri153dbd85hm3ggx6z6hdsjj1ivs8gmd193yh5jfznbyrwhk7";
           };
           propagatedBuildInputs = [
             cmake
@@ -2129,10 +2080,10 @@ let
       rosservice = { catkin, cmake, genpy, gtest, pkgconfig, pyEnv, rosgraph, roslib, rosmsg, rospy, stdenv }:
       mkRosPythonPackage {
           name = "rosservice";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosservice/1.13.0-0.tar.gz";
-            sha256 = "0mglyla5cfdccmji31c7a079q0vqc9x1djiw5ah5vbzgqhy7mnp5";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rosservice/1.13.5-0.tar.gz";
+            sha256 = "0l0rrpxq940hdc6l6hs3l0nii90hchmfjv6w8siiwrynxqvny9m4";
           };
           propagatedBuildInputs = [
             cmake
@@ -2150,10 +2101,10 @@ let
       rostest = { boost, catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph, roslaunch, rosmaster, rospy, rosunit, stdenv }:
       mkRosPythonPackage {
           name = "rostest";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rostest/1.13.0-0.tar.gz";
-            sha256 = "1b9br7jyd4x305xgq3r2cvpk1qr36d56mfhjp39hqzwkr6v0illv";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rostest/1.13.5-0.tar.gz";
+            sha256 = "1x08ry1rwz69k3g5k9dksz3dw2vi4f3k5mm6mgj86snfzlgz1ipf";
           };
           propagatedBuildInputs = [
             cmake
@@ -2172,10 +2123,10 @@ let
       rostopic = { catkin, cmake, genpy, gtest, pkgconfig, pyEnv, rosbag, rospy, rostest, stdenv }:
       mkRosPythonPackage {
           name = "rostopic";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rostopic/1.13.0-0.tar.gz";
-            sha256 = "0ji1vdaf1p8gfacrb70k8iyv2wwd26p1irlnkaqc68q7vp6626f8";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/rostopic/1.13.5-0.tar.gz";
+            sha256 = "0h8apzh9v0i4sp44di8r36gii6mpxr5c106slmx3lx6kgi47ncb0";
           };
           propagatedBuildInputs = [
             cmake
@@ -2192,10 +2143,10 @@ let
       roswtf = { catkin, cmake, gtest, pkgconfig, pyEnv, rosbuild, rosgraph, roslaunch, roslib, rosnode, rosservice, rostest, stdenv }:
       mkRosPythonPackage {
           name = "roswtf";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roswtf/1.13.0-0.tar.gz";
-            sha256 = "0ai7mphbxyqr7bfi86gp6bnq55ddfik9nh4cp8rpnwx8hd2wh98c";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/roswtf/1.13.5-0.tar.gz";
+            sha256 = "1ykqaxhc18nzkj4r5badglb3694mvchipm2w7mrrs1gjkrqvb6nj";
           };
           propagatedBuildInputs = [
             cmake
@@ -2215,10 +2166,10 @@ let
       topic_tools = { catkin, cmake, cpp_common, gtest, message_generation, message_runtime, pkgconfig, pyEnv, rosconsole, roscpp, rostest, rostime, rosunit, std_msgs, stdenv, xmlrpcpp }:
       mkRosPythonPackage {
           name = "topic_tools";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/topic_tools/1.13.0-0.tar.gz";
-            sha256 = "1pxx4gry753j2ha03zjpw3gnbicyzg5b1qvyyinpxd1bjcq1g338";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/topic_tools/1.13.5-0.tar.gz";
+            sha256 = "0nr4f6hdvsd82c0vijbx6kz1avhzgsj200mkgi2p0csr3g1wj4y3";
           };
           propagatedBuildInputs = [
             cmake
@@ -2241,10 +2192,10 @@ let
       xmlrpcpp = { catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "xmlrpcpp";
-          version = "1.13.0-0";
+          version = "1.13.5-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/xmlrpcpp/1.13.0-0.tar.gz";
-            sha256 = "193q5zwz5y045i128mfh0dn8c983l8nyn7b4dfzjw2ccb43h0yms";
+            url = "https://github.com/ros-gbp/ros_comm-release/archive/release/lunar/xmlrpcpp/1.13.5-0.tar.gz";
+            sha256 = "0qawf5x2shbn5bpp3zwfj1pgnhyyv7l8nl6nm9mlljmzwsjbh8wn";
           };
           propagatedBuildInputs = [
             cmake
@@ -2311,10 +2262,10 @@ let
       rosconsole_bridge = { catkin, cmake, console-bridge, gtest, pkgconfig, pyEnv, rosconsole, stdenv }:
       mkRosCmakePackage {
           name = "rosconsole_bridge";
-          version = "0.4.4-0";
+          version = "0.5.0-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/rosconsole_bridge-release/archive/release/lunar/rosconsole_bridge/0.4.4-0.tar.gz";
-            sha256 = "0sy9985nhhf8z7rfa2ai3w602fsx2q934vpcc6z1h30x4r9w784s";
+            url = "https://github.com/ros-gbp/rosconsole_bridge-release/archive/release/lunar/rosconsole_bridge/0.5.0-0.tar.gz";
+            sha256 = "00z7k8isgsnq5rv5hbvfyhb8cap4hjgbnadifq6jraqbdfgghvd3";
           };
           propagatedBuildInputs = [
             cmake
@@ -2329,10 +2280,10 @@ let
       cpp_common = { boost, catkin, cmake, console-bridge, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "cpp_common";
-          version = "0.6.4-0";
+          version = "0.6.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/cpp_common/0.6.4-0.tar.gz";
-            sha256 = "1py422rcin687a7kdfwf9r55h6qziyskdxb32rjqp8pa0n2mg55f";
+            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/cpp_common/0.6.7-0.tar.gz";
+            sha256 = "1ybh3civd1vy20j6i2a4gyc6v572yp1xphhdcghzlsppr0f19y1j";
           };
           propagatedBuildInputs = [
             cmake
@@ -2347,10 +2298,10 @@ let
       roscpp_core = { catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, roscpp_serialization, roscpp_traits, rostime, stdenv }:
       mkRosCmakePackage {
           name = "roscpp_core";
-          version = "0.6.4-0";
+          version = "0.6.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/roscpp_core/0.6.4-0.tar.gz";
-            sha256 = "0jgggmv2bcnaj39fd7bkklm6336x4bnw1sn4kkcad0jfb5xxm5cw";
+            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/roscpp_core/0.6.7-0.tar.gz";
+            sha256 = "1jxkr5jhgvqwk11fhla03rgdfmd39n8shqrb24wdim2xr68cx2hb";
           };
           propagatedBuildInputs = [
             cmake
@@ -2367,10 +2318,10 @@ let
       roscpp_serialization = { catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, roscpp_traits, rostime, stdenv }:
       mkRosCmakePackage {
           name = "roscpp_serialization";
-          version = "0.6.4-0";
+          version = "0.6.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/roscpp_serialization/0.6.4-0.tar.gz";
-            sha256 = "0zsvwdyzd8vxdswlc6w6d606ik9zffqkz6ylfmlyv35zh8vwng44";
+            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/roscpp_serialization/0.6.7-0.tar.gz";
+            sha256 = "085yzyhmd9yqpi44pjhxp5p2c30x22zilr3iipwgp3qpb4z2mzhz";
           };
           propagatedBuildInputs = [
             cmake
@@ -2386,10 +2337,10 @@ let
       roscpp_traits = { catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, rostime, stdenv }:
       mkRosCmakePackage {
           name = "roscpp_traits";
-          version = "0.6.4-0";
+          version = "0.6.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/roscpp_traits/0.6.4-0.tar.gz";
-            sha256 = "0lghfl0y1n3zcplq3ljz8j9z1525gw5i59jcqgdi3rjnppvhh9wq";
+            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/roscpp_traits/0.6.7-0.tar.gz";
+            sha256 = "1p36jl0fh75zqbl0wmsrdy101ym5z0lpcmra53ilr7p3vjn6jsbs";
           };
           propagatedBuildInputs = [
             cmake
@@ -2404,10 +2355,10 @@ let
       rostime = { boost, catkin, cmake, cpp_common, gtest, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "rostime";
-          version = "0.6.4-0";
+          version = "0.6.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/rostime/0.6.4-0.tar.gz";
-            sha256 = "0kd602ci5f8zjlgj913qk5g961vdix52da72cqxrb2hhv4hay51v";
+            url = "https://github.com/ros-gbp/roscpp_core-release/archive/release/lunar/rostime/0.6.7-0.tar.gz";
+            sha256 = "03rm1ba8xmh8bsgacm2r5grpdcp7jz2w4lg1winpq5i4ci08sjxv";
           };
           propagatedBuildInputs = [
             cmake
@@ -2422,10 +2373,10 @@ let
       roslisp = { catkin, cmake, gtest, pkgconfig, pyEnv, rosgraph_msgs, roslang, rospack, sbcl, std_srvs, stdenv }:
       mkRosCmakePackage {
           name = "roslisp";
-          version = "1.9.20-0";
+          version = "1.9.21-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/roslisp-release/archive/release/lunar/roslisp/1.9.20-0.tar.gz";
-            sha256 = "08nn4mll61wkmmw68w0ki6p9vj9k4hrwpjlzq0nayq58lsim0bhw";
+            url = "https://github.com/ros-gbp/roslisp-release/archive/release/lunar/roslisp/1.9.21-0.tar.gz";
+            sha256 = "1fhbspfpp29z39bqm1vm0nj5687jd0v7jx0ghzfpsq23s5k233my";
           };
           propagatedBuildInputs = [
             cmake
@@ -2440,13 +2391,13 @@ let
             std_srvs
           ];
         };
-      rospack = { boost, catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, tinyxml-2 }:
+      rospack = { boost, catkin, cmake, cmake_modules, gtest, pkgconfig, pyEnv, stdenv, tinyxml2 }:
       mkRosCmakePackage {
           name = "rospack";
-          version = "2.4.1-0";
+          version = "2.4.3-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/rospack-release/archive/release/lunar/rospack/2.4.1-0.tar.gz";
-            sha256 = "0p4nnj246mqhsmzzvs98nxvnrc9mb9i076r7cx7rqkfm53a5nypr";
+            url = "https://github.com/ros-gbp/rospack-release/archive/release/lunar/rospack/2.4.3-0.tar.gz";
+            sha256 = "0ikhpw1gp02y92i0sdfnvxqk7qx84pn0vw8qh2jzyh1fjirakp61";
           };
           propagatedBuildInputs = [
             cmake
@@ -2458,7 +2409,7 @@ let
             cmake_modules
             gtest
             pkgconfig
-            tinyxml-2
+            tinyxml2
           ];
         };
       std_msgs = { catkin, cmake, gtest, message_generation, message_runtime, pkgconfig, pyEnv, stdenv }:
@@ -2482,19 +2433,19 @@ let
       cv_bridge = { boost, catkin, cmake, gtest, opencv3, pkgconfig, pyEnv, rosconsole, sensor_msgs, stdenv }:
       mkRosPythonPackage {
           name = "cv_bridge";
-          version = "1.12.4-0";
+          version = "1.12.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/vision_opencv-release/archive/release/lunar/cv_bridge/1.12.4-0.tar.gz";
-            sha256 = "1slnqq739l2q99x6lwyks7m97c5b7b56z66pkrj15fbvkpv0wr74";
-          };
+            url = "https://github.com/ros-gbp/vision_opencv-release/archive/release/lunar/cv_bridge/1.12.7-0.tar.gz";
+            sha256 = "15201pl562mj5y75vrgpq8s9ghy2fbbbh6cjkqs796gzi8dh0vhk";
+    };
           propagatedBuildInputs = [
             cmake
             pkgconfig
-            gtest
             pyEnv
+            gtest
             boost
             catkin
-            opencv3
+            # opencv3
             rosconsole
             sensor_msgs
           ];
@@ -2502,10 +2453,10 @@ let
       image_geometry = { catkin, cmake, gtest, opencv3, pkgconfig, pyEnv, sensor_msgs, stdenv }:
       mkRosPythonPackage {
           name = "image_geometry";
-          version = "1.12.4-0";
+          version = "1.12.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/vision_opencv-release/archive/release/lunar/image_geometry/1.12.4-0.tar.gz";
-            sha256 = "0rjssx8p1qswqgnvbypjxwdcfcyvjfr7hdwg3m1kngzaa25rxhsr";
+            url = "https://github.com/ros-gbp/vision_opencv-release/archive/release/lunar/image_geometry/1.12.7-0.tar.gz";
+            sha256 = "0j34pp3f7v5zs50ldj475j29bnnwciphlv03afg7cc4asj4pzplv";
           };
           propagatedBuildInputs = [
             cmake
@@ -2520,10 +2471,10 @@ let
       vision_opencv = { catkin, cmake, cv_bridge, gtest, image_geometry, pkgconfig, pyEnv, stdenv }:
       mkRosCmakePackage {
           name = "vision_opencv";
-          version = "1.12.4-0";
+          version = "1.12.7-0";
           src = fetchurl {
-            url = "https://github.com/ros-gbp/vision_opencv-release/archive/release/lunar/vision_opencv/1.12.4-0.tar.gz";
-            sha256 = "05dgf3kkpd9035s8lvp2zimffwhak8miydh3c1rdw26jlxk0m6g3";
+            url = "https://github.com/ros-gbp/vision_opencv-release/archive/release/lunar/vision_opencv/1.12.7-0.tar.gz";
+            sha256 = "12k9q27w5agfvi4nb1y6fl0fw17xybhaka0f5sh98h347i67schc";
           };
           propagatedBuildInputs = [
             cmake
